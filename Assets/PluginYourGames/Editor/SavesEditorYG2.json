@@ -1,0 +1,52 @@
+{
+    "clickerInitialized": true,
+    "score": 3052688878.0742475,
+    "phaseIndex": 11,
+    "hpLeft": 2327780562.925744,
+    "pendingOverflow": 0.0,
+    "clickCounts": [
+        2,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+    ],
+    "idleCounts": [
+        2,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        3,
+        2,
+        0,
+        0,
+        0
+    ],
+    "muted": false,
+    "gameWon": false,
+    "stringKeys": [],
+    "stringValues": [],
+    "floatKeys": [],
+    "floatValues": [],
+    "intKeys": [],
+    "intValues": [],
+    "intExample": 5,
+    "strExample": "Hello!",
+    "boolExample": [
+        false,
+        false,
+        false,
+        false
+    ],
+    "idSave": 193
+}
