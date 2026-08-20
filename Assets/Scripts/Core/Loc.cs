@@ -36,8 +36,7 @@ namespace Clicker
         public static string TabClick => T("Клик", "Click");
         public static string TabIdle => T("Пассив", "Idle");
         public static string Buy => T("Купить", "Buy");
-        public static string Locked => T("Следующий этап", "Next stage");
-        public static string Maxed => T("Макс.", "Max");
+        public static string Locked => T("Купите предыдущее", "Buy the previous upgrade");
         public static string Owned => T("куплено", "owned");
         public static string Continue => T("Далее", "Continue");
         public static string VictoryTitle => T("Победа!", "Victory!");
@@ -46,9 +45,8 @@ namespace Clicker
             "All opponents have fallen. You finished the game!");
         public static string MuteOn => T("Звук выкл.", "Sound off");
         public static string MuteOff => T("Звук вкл.", "Sound on");
-        public static string Enemy => T("Противник", "Enemy");
-        public static string Stage => T("Стадия", "Stage");
-        public static string HowToPlay => T("Кликайте по центральному противнику. Очки наносят урон и тратятся на улучшения.", "Click the center opponent. Points deal damage and buy upgrades.");
+        public static string ShopClick => T("Клик", "Click");
+        public static string ShopIdle => T("Пассив", "Idle");
 
         public static string RewardedButton(float percent)
         {

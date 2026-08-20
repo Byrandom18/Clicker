@@ -12,7 +12,7 @@ namespace Clicker
         public string Text => Loc.T(ru, en);
     }
 
-    [CreateAssetMenu(menuName = "Clicker/Dialog Catalog", fileName = "DialogCatalog")]
+    [CreateAssetMenu(menuName = "Clicker/Dialogs", fileName = "Dialogs")]
     public class DialogCatalog : ScriptableObject
     {
         public DialogLine[] phaseLines;

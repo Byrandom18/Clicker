@@ -1,66 +1,99 @@
-using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using YG;
 
 namespace Clicker
 {
-    [DefaultExecutionOrder(-50)]
+    // Scene wiring (you assemble Canvas): Clicker/Create Default Data Assets,
+    // Clicker/Create Prefabs, Clicker/Add World Objects To Open Scene.
     public class ClickerGame : MonoBehaviour
     {
-        public BalanceConfig balance;
-        public EnemyCatalog enemies;
-        public DialogCatalog dialogs;
-        public ClickerView view;
+        [Header("Data")]
+        [SerializeField] BalanceConfig balance;
+        [SerializeField] DialogCatalog dialogs;
+
+        [Header("World")]
+        [SerializeField] EnemySlotDirector slots;
+
+        [Header("UI")]
+        [SerializeField] BattleZoneClick battleZone;
+        [SerializeField] ShopView shop;
+        [SerializeField] HudView hud;
+        [SerializeField] SpeechBubbleView bubble;
+        [SerializeField] VictoryView victory;
 
         EconomyService _economy;
         CombatService _combat;
+        InterstitialGate _ads;
         bool _booted;
-        bool _ready;
-        bool _waitingAd;
+        bool _blockPlay;
         bool _dirty;
         float _lastSave = -10f;
         float _hudAcc;
-        Coroutine _adSafety;
 
         void Awake()
         {
             Application.targetFrameRate = 60;
-            if (view == null)
-                view = GetComponent<ClickerView>();
-            LoadConfigs();
+            _ads = new InterstitialGate(this);
+        }
+
+        void OnEnable()
+        {
+            BattleZoneClick.Pressed += HandleClick;
+            ShopRowView.BuyClicked += HandleBuy;
+            if (bubble != null)
+                bubble.ContinueClicked += HandleBubbleContinue;
+            YG2.onSwitchLang += HandleLang;
+        }
+
+        void OnDisable()
+        {
+            BattleZoneClick.Pressed -= HandleClick;
+            ShopRowView.BuyClicked -= HandleBuy;
+            if (bubble != null)
+                bubble.ContinueClicked -= HandleBubbleContinue;
+            YG2.onSwitchLang -= HandleLang;
+            _ads?.Cancel();
         }
 
         void Start()
         {
-            YG2.onGetSDKData += Boot;
             if (YG2.isSDKEnabled)
                 Boot();
+            else
+                YG2.onGetSDKData += Boot;
         }
 
         void OnDestroy()
         {
             YG2.onGetSDKData -= Boot;
-            YG2.onPauseGame -= HandlePause;
-            YG2.onSwitchLang -= HandleLang;
-            YG2.onCloseInterAdvWasShow -= HandleAdClosed;
         }
 
-        void LoadConfigs()
+        void Update()
         {
-            if (balance == null)
-                balance = Resources.Load<BalanceConfig>("Clicker/BalanceConfig");
-            if (balance == null)
-                balance = BalanceDefaults.CreateBalance();
+            if (!_booted || _combat == null || _economy == null)
+                return;
 
-            if (enemies == null)
-                enemies = Resources.Load<EnemyCatalog>("Clicker/EnemyCatalog");
-            if (enemies == null)
-                enemies = BalanceDefaults.CreateEnemies();
+            if (CanTick())
+            {
+                double gain = _economy.IdlePerSecond * Time.deltaTime;
+                if (gain > 0d)
+                {
+                    _economy.AddIncome(gain);
+                    if (_combat.ApplyDamage(gain))
+                        BeginInterlude();
+                    _dirty = true;
+                }
+            }
 
-            if (dialogs == null)
-                dialogs = Resources.Load<DialogCatalog>("Clicker/DialogCatalog");
-            if (dialogs == null)
-                dialogs = BalanceDefaults.CreateDialogs();
+            _hudAcc += Time.unscaledDeltaTime;
+            if (_hudAcc >= 0.12f)
+            {
+                _hudAcc = 0f;
+                RefreshUi();
+            }
+
+            MaybeSave(false);
         }
 
         void Boot()
@@ -70,261 +103,288 @@ namespace Clicker
                 return;
             _booted = true;
 
-            if (view == null)
+            if (balance == null)
             {
-                Debug.LogError("ClickerGame: назначьте ClickerView на объекте сцены.");
+                Debug.LogError("ClickerGame: assign BalanceConfig.");
                 return;
             }
 
-            YG2.HideBanner();
-            SaveUtil.EnsureArrays(balance.ShopCount);
-
             _economy = new EconomyService(balance);
-            _combat = new CombatService(balance, _economy);
+            _combat = new CombatService(balance);
+            _combat.InitFromSave();
 
-            if (!YG2.saves.clickerInitialized)
+            if (shop != null)
             {
-                _combat.InitializeNewRun();
-                YG2.saves.clickerInitialized = true;
-                SaveNow();
+                shop.Collect();
+                var defs = new List<UpgradeDef>();
+                var rows = shop.Rows;
+                for (int i = 0; i < rows.Length; i++)
+                {
+                    if (rows[i] != null && rows[i].Definition != null)
+                        defs.Add(rows[i].Definition);
+                }
+
+                _economy.SetDefinitions(defs);
             }
             else
             {
-                _combat.Restore();
                 _economy.Recalc();
             }
 
-            view.Bind(_economy, _combat, balance, enemies, dialogs);
-            view.OnEnemyClicked += HandleClick;
-            view.OnBuy += HandleBuy;
-            view.OnContinue += HandleContinue;
-            view.OnRewarded += HandleRewarded;
-            view.OnMute += HandleMute;
-
-            _combat.OnPhaseCleared += HandlePhaseCleared;
-            _combat.OnVictory += HandleVictoryReached;
-            _combat.OnChanged += MarkDirty;
-
-            YG2.onPauseGame += HandlePause;
-            YG2.onSwitchLang += HandleLang;
-            ApplyMute();
-            view.RefreshAll();
-
-            if (YG2.saves.gameWon)
+            ApplyMute(YG2.saves.muted, false);
+            if (slots != null)
             {
-                view.ShowVictory();
-                YG2.GameplayStop();
-            }
-            else if (_combat.HasPendingInterlude)
-            {
-                view.ShowDialog(_combat.PhaseIndex);
-                view.BeginTransition(_combat.PhaseIndex);
-                YG2.GameplayStop();
-            }
-            else if (!YG2.isPauseGame)
-            {
-                YG2.GameplayStart();
+                slots.SnapToPhase(_combat.PhaseIndex);
+                RefreshEnemySprites(false);
             }
 
-            _ready = true;
+            if (bubble != null)
+                bubble.Hide();
+            if (victory != null)
+                victory.Hide();
+
+            if (hud != null)
+            {
+                if (hud.MuteButton != null)
+                    hud.MuteButton.onClick.AddListener(ToggleMute);
+                if (hud.RewardedButton != null)
+                    hud.RewardedButton.onClick.AddListener(HandleRewarded);
+            }
+
+            if (_combat.IsWon)
+            {
+                ShowVictory();
+                return;
+            }
+
+            if (_combat.HpLeft <= 0d)
+            {
+                BeginInterlude();
+                RefreshUi();
+                return;
+            }
+
+            SetPlaying(true);
+            YG2.GameplayStart();
+            RefreshUi();
         }
 
-        void Update()
+        bool CanTick()
         {
-            LimitUltraWide();
-            if (!_ready || _combat == null)
-                return;
-
-            _hudAcc += Time.unscaledDeltaTime;
-            if (_hudAcc >= 0.2f)
-            {
-                _hudAcc = 0f;
-                view.RefreshHud();
-                view.RefreshShop();
-            }
-
-            if (_dirty && Time.unscaledTime - _lastSave > 2f)
-                SaveNow();
-
-            if (_combat.Locked || _combat.Won || _waitingAd)
-                return;
-            if (YG2.isPauseGame || !YG2.isFocusWindowGame || YG2.nowAdsShow)
-                return;
-            if (Time.timeScale <= 0f)
-                return;
-
-            double idle = _economy.IdlePerSecond * Time.deltaTime;
-            if (idle > 0d)
-                _combat.ApplyDamage(idle);
-        }
-
-        void LimitUltraWide()
-        {
-            var cam = Camera.main;
-            if (cam == null || Screen.height <= 0)
-                return;
-            float aspect = (float)Screen.width / Screen.height;
-            if (aspect > 2f)
-            {
-                float w = 2f / aspect;
-                cam.rect = new Rect((1f - w) * 0.5f, 0f, w, 1f);
-            }
-            else
-                cam.rect = new Rect(0f, 0f, 1f, 1f);
+            return !_blockPlay
+                   && !_combat.IsWon
+                   && !_combat.HasPendingInterlude
+                   && !YG2.isPauseGame
+                   && YG2.isFocusWindowGame
+                   && !YG2.nowAdsShow
+                   && Time.timeScale > 0f;
         }
 
         void HandleClick()
         {
-            if (!_ready || _combat.Locked || _combat.Won || YG2.nowAdsShow)
+            if (!_booted || !CanTick())
                 return;
-            _combat.ApplyDamage(_economy.ClickPower);
-            view.PunchActive();
-            view.RefreshHud();
-            MarkDirty();
+
+            double amount = _economy.ClickPower;
+            _economy.AddIncome(amount);
+            if (_combat.ApplyDamage(amount))
+                BeginInterlude();
+            _dirty = true;
+            RefreshUi();
         }
 
-        void HandleBuy(int shopIndex)
+        void HandleBuy(UpgradeDef def)
         {
-            if (!_ready || _combat.Won)
+            if (!_booted || _blockPlay || _combat.IsWon || def == null)
                 return;
-            if (!_economy.TryBuy(shopIndex))
+            if (!_economy.TryBuy(def))
                 return;
-            view.RefreshShop();
-            view.RefreshHud();
-            SaveNow();
+            MaybeSave(true);
+            RefreshUi();
         }
 
-        void HandlePhaseCleared(int phase)
+        void HandleRewarded()
         {
-            YG2.GameplayStop();
-            view.ShowDialog(phase);
-            view.BeginTransition(phase);
-            view.RefreshHud();
-            SaveNow();
-        }
-
-        void HandleContinue()
-        {
-            if (!_ready || _waitingAd || !_combat.HasPendingInterlude)
+            if (!_booted || !CanTick())
                 return;
 
-            view.HideDialog();
-            view.SnapRotation();
-
-            if (YG2.isTimerAdvCompleted && !YG2.nowAdsShow)
+            YG2.RewardedAdvShow("hpBoost", () =>
             {
-                _waitingAd = true;
-                YG2.onCloseInterAdvWasShow += HandleAdClosed;
-                YG2.InterstitialAdvShow();
-                if (_adSafety != null)
-                    StopCoroutine(_adSafety);
-                _adSafety = StartCoroutine(AdSafetyTimeout());
+                if (_combat == null || _combat.IsWon || _blockPlay)
+                    return;
+                float pct = balance.GetRewardedPercent(_combat.PhaseIndex);
+                double dmg = System.Math.Min(_combat.HpMax * pct, _combat.HpLeft);
+                if (dmg <= 0d)
+                    return;
+                _economy.AddIncome(dmg);
+                if (_combat.ApplyDamage(dmg))
+                    BeginInterlude();
+                MaybeSave(true);
+                RefreshUi();
+            });
+        }
+
+        void ToggleMute()
+        {
+            ApplyMute(!YG2.saves.muted, true);
+            RefreshUi();
+        }
+
+        void ApplyMute(bool muted, bool save)
+        {
+            YG2.saves.muted = muted;
+            AudioListener.volume = muted ? 0f : 1f;
+            if (save)
+                MaybeSave(true);
+        }
+
+        void BeginInterlude()
+        {
+            if (_blockPlay)
+                return;
+
+            _blockPlay = true;
+            SetPlaying(false);
+            YG2.GameplayStop();
+            RefreshEnemySprites(true);
+
+            int phase = _combat.PhaseIndex;
+            if (slots != null)
+            {
+                slots.PlaySwap(phase, () => OpenBubble(phase));
             }
             else
-                FinishInterlude();
-        }
-
-        IEnumerator AdSafetyTimeout()
-        {
-            float t = 0f;
-            while (_waitingAd && !YG2.nowAdsShow && t < 0.45f)
             {
-                t += Time.unscaledDeltaTime;
-                yield return null;
-            }
-
-            if (_waitingAd && !YG2.nowAdsShow)
-            {
-                YG2.onCloseInterAdvWasShow -= HandleAdClosed;
-                _waitingAd = false;
-                FinishInterlude();
+                OpenBubble(phase);
             }
         }
 
-        void HandleAdClosed(bool shown)
+        void OpenBubble(int phase)
         {
-            YG2.onCloseInterAdvWasShow -= HandleAdClosed;
-            _waitingAd = false;
-            if (_adSafety != null)
+            string line = dialogs != null ? dialogs.GetPhaseLine(phase) : string.Empty;
+            Transform head = null;
+            if (slots != null)
             {
-                StopCoroutine(_adSafety);
-                _adSafety = null;
+                var enemy = slots.GetEnemy(phase % 3);
+                if (enemy != null)
+                    head = enemy.HeadAnchor;
             }
 
-            FinishInterlude();
+            if (bubble != null)
+                bubble.Show(line, head);
+            else
+                HandleBubbleContinue();
+        }
+
+        void HandleBubbleContinue()
+        {
+            if (!_blockPlay)
+                return;
+            if (bubble != null)
+                bubble.Hide();
+
+            bool lastPhase = _combat.PhaseIndex >= _combat.PhaseCount - 1;
+            if (lastPhase)
+            {
+                FinishInterlude();
+                return;
+            }
+
+            _ads.ShowThen(FinishInterlude);
         }
 
         void FinishInterlude()
         {
             _combat.AdvanceAfterInterlude();
-            SaveNow();
-            if (_combat.Won || _combat.Locked)
-                return;
-            view.HideDialog();
-            view.RefreshAll();
-            if (!YG2.isPauseGame)
-                YG2.GameplayStart();
-        }
+            MaybeSave(true);
 
-        void HandleVictoryReached()
-        {
-            view.ShowVictory();
-            YG2.GameplayStop();
-            SaveNow();
-            if (YG2.reviewCanShow)
-                YG2.ReviewShow();
-        }
-
-        void HandleRewarded()
-        {
-            if (!_ready || _combat.Locked || _combat.Won || YG2.nowAdsShow)
-                return;
-
-            YG2.RewardedAdvShow("hp_boost", () =>
+            if (_combat.IsWon)
             {
-                float pct = balance.GetRewardedPercent(_combat.PhaseIndex);
-                _combat.ApplyDamage(_combat.HpMax * pct);
-                view.RefreshHud();
-                view.RefreshRewarded();
-                SaveNow();
-            });
-        }
-
-        void HandleMute()
-        {
-            YG2.saves.muted = !YG2.saves.muted;
-            ApplyMute();
-            view.RefreshMute();
-            SaveNow();
-        }
-
-        void ApplyMute()
-        {
-            AudioListener.volume = YG2.saves.muted ? 0f : 1f;
-        }
-
-        void HandlePause(bool paused)
-        {
-            if (!_ready)
+                ShowVictory();
                 return;
-            if (!paused && !_combat.Locked && !_combat.Won && !_waitingAd)
-                YG2.GameplayStart();
+            }
+
+            if (_combat.HasPendingInterlude)
+            {
+                _blockPlay = false;
+                BeginInterlude();
+                return;
+            }
+
+            if (slots != null)
+                slots.SnapToPhase(_combat.PhaseIndex);
+            RefreshEnemySprites(false);
+            SetPlaying(true);
+            YG2.GameplayStart();
+            RefreshUi();
         }
 
-        void HandleLang(string lang)
+        void ShowVictory()
         {
-            if (view != null)
-                view.RefreshAll();
+            _blockPlay = true;
+            SetPlaying(false);
+            YG2.GameplayStop();
+            if (bubble != null)
+                bubble.Hide();
+            if (victory != null)
+                victory.Show(dialogs != null ? dialogs.VictoryText : Loc.VictoryBody);
+            RefreshUi();
+            MaybeSave(true);
         }
 
-        void MarkDirty() => _dirty = true;
-
-        void SaveNow()
+        void SetPlaying(bool playing)
         {
-            _dirty = false;
+            if (battleZone != null)
+                battleZone.SetClicksEnabled(playing);
+            if (hud != null)
+                hud.SetRewardedInteractable(playing);
+        }
+
+        void RefreshEnemySprites(bool afterKill)
+        {
+            if (slots == null || _combat == null)
+                return;
+            for (int i = 0; i < 3; i++)
+            {
+                var view = slots.GetEnemy(i);
+                if (view != null)
+                    view.ApplyStage(_combat.GetSpriteIndex(i, afterKill));
+            }
+        }
+
+        void RefreshUi()
+        {
+            if (_economy == null || _combat == null)
+                return;
+            if (shop != null)
+                shop.Refresh(_economy);
+            if (hud != null)
+            {
+                float pct = balance != null ? balance.GetRewardedPercent(_combat.PhaseIndex) : 0.1f;
+                hud.Refresh(_economy, _combat, pct, YG2.saves.muted);
+            }
+        }
+
+        void HandleLang(string _)
+        {
+            RefreshUi();
+            if (bubble != null && bubble.gameObject.activeInHierarchy && _combat != null)
+            {
+                var enemy = slots != null ? slots.GetEnemy(_combat.ActiveEnemyIndex) : null;
+                bubble.Show(dialogs != null ? dialogs.GetPhaseLine(_combat.PhaseIndex) : string.Empty,
+                    enemy != null ? enemy.HeadAnchor : null);
+            }
+        }
+
+        void MaybeSave(bool force)
+        {
+            if (!force && !_dirty)
+                return;
+            if (!force && Time.unscaledTime - _lastSave < 1f)
+                return;
+            YG2.SaveProgress();
             _lastSave = Time.unscaledTime;
-            if (YG2.isSDKEnabled)
-                YG2.SaveProgress();
+            _dirty = false;
         }
     }
 }

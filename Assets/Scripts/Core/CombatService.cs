@@ -1,124 +1,131 @@
-using System;
+using UnityEngine;
 using YG;
 
 namespace Clicker
 {
-    public class CombatService
+    public sealed class CombatService
     {
         readonly BalanceConfig _balance;
-        readonly EconomyService _economy;
 
-        public bool Locked { get; private set; }
-        public bool Won => YG2.saves.gameWon;
         public int PhaseIndex => YG2.saves.phaseIndex;
+        public bool IsWon => YG2.saves.gameWon;
+        public bool HasPendingInterlude { get; private set; }
         public double HpLeft => YG2.saves.hpLeft;
-        public double HpMax => _balance.GetPhaseHp(PhaseIndex);
+        public double HpMax => _balance != null ? _balance.GetPhaseHp(PhaseIndex) : 1d;
         public int ActiveEnemyIndex => PhaseIndex % 3;
-        public float HpNormalized => HpMax <= 0d ? 0f : (float)(HpLeft / HpMax);
+        public int PhaseCount => _balance != null && _balance.phaseCount > 0 ? _balance.phaseCount : BalanceDefaults.PhaseCount;
 
-        public event Action OnChanged;
-        public event Action<int> OnPhaseCleared;
-        public event Action OnVictory;
-
-        public CombatService(BalanceConfig balance, EconomyService economy)
+        public CombatService(BalanceConfig balance)
         {
             _balance = balance;
-            _economy = economy;
         }
 
-        public void InitializeNewRun()
+        public void InitFromSave()
         {
-            SaveUtil.EnsureArrays();
-            YG2.saves.phaseIndex = 0;
-            YG2.saves.hpLeft = _balance.GetPhaseHp(0);
-            YG2.saves.pendingOverflow = 0d;
-            YG2.saves.gameWon = false;
-            Locked = false;
-            OnChanged?.Invoke();
-        }
-
-        public void Restore()
-        {
-            SaveUtil.EnsureArrays();
-            if (Won)
+            int count = PhaseCount;
+            if (YG2.saves.phaseIndex < 0)
+                YG2.saves.phaseIndex = 0;
+            if (YG2.saves.phaseIndex >= count)
             {
-                Locked = true;
+                YG2.saves.gameWon = true;
+                YG2.saves.hpLeft = 0d;
+                return;
+            }
+
+            if (!YG2.saves.clickerInitialized || YG2.saves.hpLeft < 0d)
+            {
+                YG2.saves.hpLeft = GetPhaseHp(YG2.saves.phaseIndex);
+                YG2.saves.clickerInitialized = true;
+            }
+
+            HasPendingInterlude = false;
+        }
+
+        public double GetPhaseHp(int phase) => _balance != null ? _balance.GetPhaseHp(phase) : 170d;
+
+        public float HpFill01
+        {
+            get
+            {
+                double max = HpMax;
+                if (max <= 0d)
+                    return 0f;
+                return Mathf.Clamp01((float)(HpLeft / max));
+            }
+        }
+
+        public int GetSpriteIndex(int enemyIndex, bool afterCurrentKill)
+        {
+            int stage;
+            if (enemyIndex == ActiveEnemyIndex)
+            {
+                stage = PhaseIndex / 3;
+                if (afterCurrentKill)
+                    stage += 1;
             }
             else
             {
-                Locked = YG2.saves.hpLeft <= 0d;
+                int completed = 0;
+                for (int p = 0; p < PhaseIndex; p++)
+                {
+                    if (p % 3 == enemyIndex)
+                        completed++;
+                }
+
+                stage = completed;
             }
 
-            OnChanged?.Invoke();
+            return Mathf.Clamp(stage, 0, 3);
         }
 
-        public bool HasPendingInterlude => !Won && Locked && YG2.saves.hpLeft <= 0d;
-
-        public static int SpriteStageForEnemy(int enemyIndex, int phaseIndex)
+        public bool ApplyDamage(double amount)
         {
-            int stage = (phaseIndex + 2 - enemyIndex) / 3;
-            if (stage < 0)
-                stage = 0;
-            if (stage > 3)
-                stage = 3;
-            return stage;
-        }
+            if (amount <= 0d || IsWon || HasPendingInterlude)
+                return false;
 
-        public double ApplyDamage(double amount)
-        {
-            if (Locked || Won || amount <= 0d)
-                return 0d;
+            YG2.saves.hpLeft -= amount;
+            if (YG2.saves.hpLeft > 0d)
+                return false;
 
-            double dealt = amount;
-            if (dealt > YG2.saves.hpLeft)
-            {
-                YG2.saves.pendingOverflow += dealt - YG2.saves.hpLeft;
-                dealt = YG2.saves.hpLeft;
-            }
-
-            YG2.saves.hpLeft -= dealt;
-            if (YG2.saves.hpLeft < 0d)
-                YG2.saves.hpLeft = 0d;
-
-            _economy.AddScore(dealt);
-            OnChanged?.Invoke();
-
-            if (YG2.saves.hpLeft <= 0d)
-            {
-                Locked = true;
-                OnPhaseCleared?.Invoke(PhaseIndex);
-            }
-
-            return dealt;
+            YG2.saves.pendingOverflow = -YG2.saves.hpLeft;
+            YG2.saves.hpLeft = 0d;
+            HasPendingInterlude = true;
+            return true;
         }
 
         public void AdvanceAfterInterlude()
         {
-            if (Won)
+            HasPendingInterlude = false;
+            if (IsWon)
                 return;
 
-            int next = PhaseIndex + 1;
-            if (next >= _balance.phaseCount)
+            YG2.saves.phaseIndex++;
+            if (YG2.saves.phaseIndex >= PhaseCount)
             {
                 YG2.saves.gameWon = true;
-                YG2.saves.phaseIndex = _balance.phaseCount - 1;
                 YG2.saves.hpLeft = 0d;
-                Locked = true;
-                OnVictory?.Invoke();
-                OnChanged?.Invoke();
+                YG2.saves.pendingOverflow = 0d;
                 return;
             }
 
-            YG2.saves.phaseIndex = next;
-            YG2.saves.hpLeft = _balance.GetPhaseHp(next);
-            Locked = false;
-
+            double hp = GetPhaseHp(YG2.saves.phaseIndex);
             double overflow = YG2.saves.pendingOverflow;
             YG2.saves.pendingOverflow = 0d;
-            if (overflow > 0d)
-                ApplyDamage(overflow);
+            if (overflow <= 0d)
+            {
+                YG2.saves.hpLeft = hp;
+                return;
+            }
 
-            OnChanged?.Invoke();
+            if (overflow < hp)
+            {
+                YG2.saves.hpLeft = hp - overflow;
+                return;
+            }
+
+            YG2.saves.hpLeft = 0d;
+            YG2.saves.pendingOverflow = overflow - hp;
+            HasPendingInterlude = true;
         }
     }
 }

@@ -1,203 +1,235 @@
 using System;
-using UnityEngine;
+using System.Collections.Generic;
 
 namespace Clicker
 {
+    public sealed class BalanceSimReport
+    {
+        public double[] phaseSeconds;
+        public double[] phaseHp;
+        public double[] avgDps;
+        public double totalSeconds;
+        public string summary;
+    }
+
     public static class BalanceSimulator
     {
-        public struct PhaseReport
+        public static BalanceSimReport Run(BalanceConfig config, IReadOnlyList<UpgradeDef> click, IReadOnlyList<UpgradeDef> idle, double clicksPerSecond = 3d)
         {
-            public double seconds;
-            public double targetSeconds;
-            public double dpsAtEnd;
-            public double clickPower;
-            public double idlePower;
-        }
-
-        public struct Report
-        {
-            public PhaseReport[] phases;
-            public double totalSeconds;
-            public double targetTotal;
-            public int[] shopOwned;
-        }
-
-        public static Report Run(BalanceConfig config, double clicksPerSecond = 3d, double dt = 0.25d)
-        {
+            var report = new BalanceSimReport();
             if (config == null)
-                config = BalanceDefaults.CreateBalance();
+            {
+                report.summary = "No balance config.";
+                return report;
+            }
 
-            int n = Mathf.Max(1, config.phaseCount);
-            int shopN = Mathf.Max(1, config.ShopCount);
-            var owned = new int[shopN];
+            int phases = config.phaseCount > 0 ? config.phaseCount : BalanceDefaults.PhaseCount;
+            report.phaseSeconds = new double[phases];
+            report.phaseHp = new double[phases];
+            report.avgDps = new double[phases];
+
+            var clickOwned = new int[click != null ? click.Count : 0];
+            var idleOwned = new int[idle != null ? idle.Count : 0];
             double score = 0d;
-            double clickPower = config.baseClickPower;
-            double idlePower = 0d;
             double time = 0d;
-            var phases = new PhaseReport[n];
-            Recalc(config, owned, out clickPower, out idlePower);
+            const double dt = 0.25d;
 
-            for (int phase = 0; phase < n; phase++)
+            Recalc(config, click, idle, clickOwned, idleOwned, out double clickPower, out double idlePower);
+
+            for (int phase = 0; phase < phases; phase++)
             {
                 double hp = config.GetPhaseHp(phase);
-                double t0 = time;
-                int guard = 0;
-                while (hp > 0d && guard < 2_000_000)
+                report.phaseHp[phase] = hp;
+                double left = hp;
+                double start = time;
+                double damageAcc = 0d;
+
+                while (left > 0d)
                 {
+                    TryBuys(config, click, idle, clickOwned, idleOwned, ref score, ref clickPower, ref idlePower, clicksPerSecond);
                     double dps = clickPower * clicksPerSecond + idlePower;
                     if (dps < 0.0001d)
                         dps = 0.0001d;
-                    double earned = dps * dt;
-                    score += earned;
-                    hp -= earned;
-                    time += dt;
-                    TryBuys(config, clicksPerSecond, phase, ref score, owned, ref clickPower, ref idlePower);
-                    guard++;
+
+                    double step = dt;
+                    double gain = dps * step;
+                    score += gain;
+                    left -= gain;
+                    damageAcc += gain;
+                    time += step;
+
+                    if (time > 200000d)
+                        break;
                 }
 
-                phases[phase] = new PhaseReport
-                {
-                    seconds = time - t0,
-                    targetSeconds = config.GetTargetSeconds(phase),
-                    dpsAtEnd = clickPower * clicksPerSecond + idlePower,
-                    clickPower = clickPower,
-                    idlePower = idlePower
-                };
+                report.phaseSeconds[phase] = time - start;
+                report.avgDps[phase] = report.phaseSeconds[phase] > 0d
+                    ? damageAcc / report.phaseSeconds[phase]
+                    : 0d;
             }
 
-            double targetTotal = 0d;
+            report.totalSeconds = time;
+            report.summary =
+                $"Total {report.totalSeconds / 60d:0.0} min. Last3: " +
+                $"{report.phaseSeconds[Math.Max(0, phases - 3)] / 60d:0.0}/" +
+                $"{report.phaseSeconds[Math.Max(0, phases - 2)] / 60d:0.0}/" +
+                $"{report.phaseSeconds[phases - 1] / 60d:0.0} min. Phase0 {report.phaseSeconds[0]:0.0}s.";
+            return report;
+        }
+
+        public static void FitPhaseHp(BalanceConfig config, IReadOnlyList<UpgradeDef> click, IReadOnlyList<UpgradeDef> idle, double clicksPerSecond = 3d)
+        {
+            if (config == null || config.phaseHp == null || config.phaseHp.Length == 0)
+                return;
+
+            double target = 0d;
             if (config.targetPhaseSeconds != null)
             {
                 for (int i = 0; i < config.targetPhaseSeconds.Length; i++)
-                    targetTotal += config.targetPhaseSeconds[i];
+                    target += config.targetPhaseSeconds[i];
             }
 
-            return new Report
-            {
-                phases = phases,
-                totalSeconds = time,
-                targetTotal = targetTotal,
-                shopOwned = owned
-            };
-        }
+            if (target <= 0d)
+                target = 7200d;
 
-        static void Recalc(BalanceConfig config, int[] owned, out double clickPower, out double idlePower)
-        {
-            clickPower = config.baseClickPower;
-            idlePower = 0d;
-            for (int i = 0; i < owned.Length; i++)
+            double lo = 0.05d;
+            double hi = 20d;
+            double[] original = (double[])config.phaseHp.Clone();
+
+            for (int i = 0; i < 28; i++)
             {
-                var def = config.GetShop(i);
-                if (def == null)
-                    continue;
-                if (def.isIdle)
-                    idlePower += owned[i] * def.powerPerCopy;
+                double mid = Math.Sqrt(lo * hi);
+                ScaleHp(config, original, mid);
+                var report = Run(config, click, idle, clicksPerSecond);
+                if (report.totalSeconds > target)
+                    hi = mid;
                 else
-                    clickPower += owned[i] * def.powerPerCopy;
+                    lo = mid;
             }
+
+            ScaleHp(config, original, Math.Sqrt(lo * hi));
         }
 
-        static bool Unlocked(int shopIndex, int phase) => shopIndex / 2 <= phase;
-
-        static bool Maxed(UpgradeDef def, int ownedCount)
+        static void ScaleHp(BalanceConfig config, double[] original, double scale)
         {
-            return def != null && ownedCount >= def.MaxCopies;
+            for (int i = 0; i < config.phaseHp.Length && i < original.Length; i++)
+                config.phaseHp[i] = Math.Max(1d, original[i] * scale);
+        }
+
+        static void Recalc(
+            BalanceConfig config,
+            IReadOnlyList<UpgradeDef> click,
+            IReadOnlyList<UpgradeDef> idle,
+            int[] clickOwned,
+            int[] idleOwned,
+            out double clickPower,
+            out double idlePower)
+        {
+            clickPower = config != null ? config.baseClickPower : 1d;
+            idlePower = 0d;
+            if (click != null)
+            {
+                for (int i = 0; i < click.Count; i++)
+                {
+                    if (click[i] != null)
+                        clickPower += clickOwned[i] * click[i].powerPerCopy;
+                }
+            }
+
+            if (idle != null)
+            {
+                for (int i = 0; i < idle.Count; i++)
+                {
+                    if (idle[i] != null)
+                        idlePower += idleOwned[i] * idle[i].powerPerCopy;
+                }
+            }
         }
 
         static void TryBuys(
             BalanceConfig config,
-            double cps,
-            int phase,
+            IReadOnlyList<UpgradeDef> click,
+            IReadOnlyList<UpgradeDef> idle,
+            int[] clickOwned,
+            int[] idleOwned,
             ref double score,
-            int[] owned,
             ref double clickPower,
-            ref double idlePower)
+            ref double idlePower,
+            double clicksPerSecond)
         {
-            for (int n = 0; n < 48; n++)
+            for (int safety = 0; safety < 48; safety++)
             {
-                int nextNew = -1;
-                for (int i = 0; i < owned.Length; i++)
-                {
-                    if (Unlocked(i, phase) && owned[i] == 0)
-                    {
-                        nextNew = i;
-                        break;
-                    }
-                }
-
-                if (nextNew >= 0)
-                {
-                    var def = config.GetShop(nextNew);
-                    if (def != null && !Maxed(def, owned[nextNew]))
-                    {
-                        double cost = def.CostForOwned(owned[nextNew]);
-                        if (score >= cost)
-                        {
-                            score -= cost;
-                            owned[nextNew]++;
-                            Recalc(config, owned, out clickPower, out idlePower);
-                            continue;
-                        }
-                    }
-                }
-
-                int best = -1;
-                double bestCost = 0d;
+                int bestKind = -1;
+                int bestIndex = -1;
                 double bestEff = 0d;
-                for (int i = 0; i < owned.Length; i++)
-                {
-                    if (!Unlocked(i, phase))
-                        continue;
-                    var def = config.GetShop(i);
-                    if (def == null || Maxed(def, owned[i]))
-                        continue;
-                    double cost = def.CostForOwned(owned[i]);
-                    if (score < cost)
-                        continue;
-                    double dpsGain = def.isIdle ? def.powerPerCopy : def.powerPerCopy * cps;
-                    double eff = dpsGain / cost;
-                    if (eff > bestEff)
-                    {
-                        bestEff = eff;
-                        best = i;
-                        bestCost = cost;
-                    }
-                }
+                double bestCost = 0d;
 
-                if (best < 0)
-                    break;
+                Consider(click, clickOwned, true, clicksPerSecond, score, ref bestKind, ref bestIndex, ref bestEff, ref bestCost);
+                Consider(idle, idleOwned, false, clicksPerSecond, score, ref bestKind, ref bestIndex, ref bestEff, ref bestCost);
+
+                if (bestKind < 0)
+                    return;
 
                 score -= bestCost;
-                owned[best]++;
-                Recalc(config, owned, out clickPower, out idlePower);
+                if (bestKind == 0)
+                    clickOwned[bestIndex]++;
+                else
+                    idleOwned[bestIndex]++;
+
+                Recalc(config, click, idle, clickOwned, idleOwned, out clickPower, out idlePower);
             }
         }
 
-        public static void FitHpBase(BalanceConfig config, double clicksPerSecond = 3d)
+        static void Consider(
+            IReadOnlyList<UpgradeDef> defs,
+            int[] owned,
+            bool isClick,
+            double clicksPerSecond,
+            double score,
+            ref int bestKind,
+            ref int bestIndex,
+            ref double bestEff,
+            ref double bestCost)
         {
-            if (config == null || config.targetPhaseSeconds == null || config.targetPhaseSeconds.Length == 0)
+            if (defs == null)
                 return;
 
-            double target = 0d;
-            for (int i = 0; i < config.targetPhaseSeconds.Length; i++)
-                target += config.targetPhaseSeconds[i];
-            if (target <= 0d)
-                return;
-
-            double lo = Math.Max(1d, config.hpBase / 1000d);
-            double hi = config.hpBase * 1000d;
-            for (int i = 0; i < 28; i++)
+            for (int i = 0; i < defs.Count; i++)
             {
-                double mid = Math.Sqrt(lo * hi);
-                config.hpBase = mid;
-                var report = Run(config, clicksPerSecond);
-                if (report.totalSeconds < target)
-                    lo = mid;
-                else
-                    hi = mid;
+                var def = defs[i];
+                if (def == null)
+                    continue;
+                if (!Unlocked(defs, owned, i))
+                    continue;
+
+                double cost = def.CostForOwned(owned[i]);
+                if (cost > score || cost <= 0d)
+                    continue;
+
+                double gain = isClick ? def.powerPerCopy * clicksPerSecond : def.powerPerCopy;
+                double eff = gain / cost;
+                if (eff > bestEff)
+                {
+                    bestEff = eff;
+                    bestIndex = i;
+                    bestKind = isClick ? 0 : 1;
+                    bestCost = cost;
+                }
+            }
+        }
+
+        static bool Unlocked(IReadOnlyList<UpgradeDef> defs, int[] owned, int index)
+        {
+            var def = defs[index];
+            if (def.requires == null)
+                return true;
+            for (int i = 0; i < defs.Count; i++)
+            {
+                if (defs[i] == def.requires)
+                    return owned[i] >= 1;
             }
 
-            config.hpBase = Math.Sqrt(lo * hi);
+            return true;
         }
     }
 }

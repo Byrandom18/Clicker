@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using Clicker;
 using UnityEditor;
 using UnityEngine;
@@ -7,9 +8,8 @@ namespace Clicker.EditorTools
     public class BalanceSimulatorWindow : EditorWindow
     {
         BalanceConfig _config;
-        BalanceSimulator.Report _report;
-        Vector2 _scroll;
         double _cps = 3d;
+        string _report = "Assign Balance, then simulate. Run Clicker/Create Default Data Assets first.";
 
         [MenuItem("Clicker/Balance Simulator")]
         public static void Open()
@@ -20,49 +20,61 @@ namespace Clicker.EditorTools
         void OnGUI()
         {
             _config = (BalanceConfig)EditorGUILayout.ObjectField("Balance", _config, typeof(BalanceConfig), false);
-            _cps = EditorGUILayout.DoubleField("Clicks per second", _cps);
+            _cps = EditorGUILayout.DoubleField("Clicks / sec", _cps);
 
-            if (GUILayout.Button("Simulate default numbers"))
+            if (GUILayout.Button("Load default Balance.asset"))
             {
-                var cfg = _config != null ? _config : BalanceDefaults.CreateBalance();
-                _report = BalanceSimulator.Run(cfg, _cps);
+                _config = AssetDatabase.LoadAssetAtPath<BalanceConfig>("Assets/Clicker/Data/Balance.asset");
             }
 
-            if (GUILayout.Button("Log fitted hpBase for defaults"))
+            if (GUILayout.Button("Simulate 2h path"))
             {
-                var cfg = BalanceDefaults.CreateBalance();
-                BalanceSimulator.FitHpBase(cfg, _cps);
-                Debug.Log($"Clicker fitted hpBase={cfg.hpBase:0.###} growth={cfg.hpGrowth} total={BalanceSimulator.Run(cfg, _cps).totalSeconds / 60d:0.0} min");
-                _report = BalanceSimulator.Run(cfg, _cps);
+                if (_config == null)
+                    _config = AssetDatabase.LoadAssetAtPath<BalanceConfig>("Assets/Clicker/Data/Balance.asset");
+                var click = LoadUpgrades("Assets/Clicker/Data/Upgrades/Click");
+                var idle = LoadUpgrades("Assets/Clicker/Data/Upgrades/Idle");
+                var report = BalanceSimulator.Run(_config, click, idle, _cps);
+                _report = Format(report);
             }
 
-            if (GUILayout.Button("Fit hpBase to target total time") && _config != null)
+            if (GUILayout.Button("Fit phase HP to target total time") && _config != null)
             {
                 Undo.RecordObject(_config, "Fit clicker HP");
-                BalanceSimulator.FitHpBase(_config, _cps);
+                var click = LoadUpgrades("Assets/Clicker/Data/Upgrades/Click");
+                var idle = LoadUpgrades("Assets/Clicker/Data/Upgrades/Idle");
+                BalanceSimulator.FitPhaseHp(_config, click, idle, _cps);
                 EditorUtility.SetDirty(_config);
-                _report = BalanceSimulator.Run(_config, _cps);
+                _report = Format(BalanceSimulator.Run(_config, click, idle, _cps));
             }
 
-            if (_report.phases == null)
-                return;
-
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Total", $"{_report.totalSeconds / 60d:0.0} min  (target {_report.targetTotal / 60d:0.0} min)");
-            _scroll = EditorGUILayout.BeginScrollView(_scroll);
-            for (int i = 0; i < _report.phases.Length; i++)
+            EditorGUILayout.HelpBox(_report, MessageType.Info);
+        }
+
+        static UpgradeDef[] LoadUpgrades(string folder)
+        {
+            string[] guids = AssetDatabase.FindAssets("t:UpgradeDef", new[] { folder });
+            var list = new UpgradeDef[guids.Length];
+            for (int i = 0; i < guids.Length; i++)
+                list[i] = AssetDatabase.LoadAssetAtPath<UpgradeDef>(AssetDatabase.GUIDToAssetPath(guids[i]));
+            System.Array.Sort(list, (a, b) => string.CompareOrdinal(a != null ? a.id : "", b != null ? b.id : ""));
+            return list;
+        }
+
+        static string Format(BalanceSimReport report)
+        {
+            if (report == null || report.phaseSeconds == null)
+                return "No report.";
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine(report.summary);
+            for (int i = 0; i < report.phaseSeconds.Length; i++)
             {
-                var p = _report.phases[i];
-                double err = p.targetSeconds > 0d ? (p.seconds / p.targetSeconds - 1d) * 100d : 0d;
-                EditorGUILayout.LabelField(
-                    $"Phase {i}",
-                    $"{p.seconds:0}s / {p.targetSeconds:0}s  ({err:+0.0;-0.0}%)  DPS {p.dpsAtEnd:0}");
+                sb.AppendLine(
+                    $"P{i}: {report.phaseSeconds[i]:0.0}s  HP {report.phaseHp[i]:0}  DPS {report.avgDps[i]:0.0}");
             }
 
-            EditorGUILayout.Space();
-            if (_report.shopOwned != null)
-                EditorGUILayout.LabelField("Shop owned", string.Join(", ", _report.shopOwned));
-            EditorGUILayout.EndScrollView();
+            return sb.ToString();
         }
     }
 }
+#endif

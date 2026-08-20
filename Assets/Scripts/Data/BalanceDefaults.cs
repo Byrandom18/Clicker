@@ -5,135 +5,138 @@ namespace Clicker
     public static class BalanceDefaults
     {
         public const int PhaseCount = 12;
-        public const int ShopCount = 24;
+        public const int UpgradeCount = 12;
 
-        public static readonly double[] TargetSeconds =
+        public static readonly double[] PhaseHp =
         {
-            30d, 50d, 80d, 140d, 240d, 400d, 600d, 780d, 920d, 1320d, 1320d, 1320d
+            170d, 2100d, 9800d, 29000d, 71000d, 148000d,
+            278000d, 480000d, 790000d, 1400000d, 1800000d, 2200000d
         };
 
-        public static BalanceConfig CreateBalance()
+        public static readonly double[] TargetPhaseSeconds =
         {
-            var config = ScriptableObject.CreateInstance<BalanceConfig>();
+            30d, 90d, 165d, 250d, 355d, 470d, 600d, 740d, 900d, 1200d, 1200d, 1200d
+        };
+
+        public static readonly float[] RewardedPercent =
+        {
+            0.20f, 0.20f, 0.20f,
+            0.15f, 0.15f, 0.15f,
+            0.12f, 0.12f, 0.12f,
+            0.10f, 0.10f, 0.10f
+        };
+
+        public static void ApplyTo(BalanceConfig config)
+        {
+            if (config == null)
+                return;
+
             config.phaseCount = PhaseCount;
-            config.hpBase = 120d;
-            config.hpGrowth = 5d;
             config.baseClickPower = 1d;
             config.simulatedClicksPerSecond = 3d;
-            config.targetPhaseSeconds = (double[])TargetSeconds.Clone();
-            config.rewardedPercentByPhase = new[]
-            {
-                0.20f, 0.20f, 0.20f,
-                0.15f, 0.15f, 0.15f,
-                0.12f, 0.12f, 0.12f,
-                0.10f, 0.10f, 0.10f
-            };
-            config.shop = new[]
-            {
-                Click("punch", "Удар", "Punch", 0.25d, 15d),
-                Idle("tick", "Тик", "Tick", 0.20d, 22d),
-                Click("combo", "Комбо", "Combo", 0.75d, 40d),
-                Idle("flow", "Поток", "Flow", 0.90d, 55d),
-                Click("heavy", "Тяжёлый", "Heavy", 2.20d, 120d),
-                Idle("stream", "Струя", "Stream", 3.00d, 170d),
-                Click("burst", "Взрыв", "Burst", 3.00d, 340d),
-                Idle("factory", "Фабрика", "Factory", 4.50d, 480d),
-                Click("storm", "Шторм", "Storm", 6.00d, 950d),
-                Idle("engine", "Мотор", "Engine", 9.00d, 1350d),
-                Click("nova", "Нова", "Nova", 14d, 2800d),
-                Idle("core", "Ядро", "Core", 22d, 3900d),
-                Click("overload", "Перегрузка", "Overload", 38d, 9000d),
-                Idle("reactor", "Реактор", "Reactor", 62d, 12500d),
-                Click("breaker", "Крушитель", "Breaker", 140d, 34000d),
-                Idle("dynamo", "Динамо", "Dynamo", 240d, 48000d),
-                Click("cataclysm", "Катаклизм", "Cataclysm", 700d, 1.5e5),
-                Idle("orbit", "Орбита", "Orbit", 1200d, 2.1e5),
-                Click("singularity", "Сингулярность", "Singularity", 2500d, 5.2e5),
-                Idle("pulsar", "Пульсар", "Pulsar", 4500d, 7.3e5),
-                Click("omega", "Омега", "Omega", 15000d, 2.6e6),
-                Idle("quasar", "Квазар", "Quasar", 28000d, 3.6e6),
-                Click("transcend", "Трансценденция", "Transcend", 60000d, 1.4e7),
-                Idle("genesis", "Генезис", "Genesis", 120000d, 2.0e7)
-            };
-            return config;
+            config.tweenDuration = 0.6f;
+            config.phaseHp = (double[])PhaseHp.Clone();
+            config.targetPhaseSeconds = (double[])TargetPhaseSeconds.Clone();
+            config.rewardedPercentByPhase = (float[])RewardedPercent.Clone();
         }
 
-        public static EnemyCatalog CreateEnemies()
+        public static UpgradeSpec[] ClickSpecs()
         {
-            var catalog = ScriptableObject.CreateInstance<EnemyCatalog>();
-            catalog.enemies = new[]
+            return new[]
             {
-                Enemy("scarlet", "Алый", "Scarlet", new Color(0.91f, 0.36f, 0.30f)),
-                Enemy("azure", "Лазурный", "Azure", new Color(0.30f, 0.80f, 0.77f)),
-                Enemy("amber", "Янтарный", "Amber", new Color(0.96f, 0.83f, 0.37f))
+                Spec("click_00_punch", "Удар", "Punch", 1d, 15d),
+                Spec("click_01_combo", "Серия", "Combo", 2d, 130d),
+                Spec("click_02_heavy", "Тяжёлый", "Heavy", 3d, 310d),
+                Spec("click_03_burst", "Залп", "Burst", 4d, 720d),
+                Spec("click_04_storm", "Шторм", "Storm", 5d, 1420d),
+                Spec("click_05_nova", "Нова", "Nova", 6d, 2390d),
+                Spec("click_06_overload", "Перегрузка", "Overload", 7d, 3640d),
+                Spec("click_07_breaker", "Ломатель", "Breaker", 8d, 5300d),
+                Spec("click_08_cataclysm", "Катаклизм", "Cataclysm", 9d, 7520d),
+                Spec("click_09_singularity", "Сингулярность", "Singularity", 10d, 10300d),
+                Spec("click_10_omega", "Омега", "Omega", 11d, 13600d),
+                Spec("click_11_transcend", "Трансценденция", "Transcend", 12d, 17000d)
             };
-            return catalog;
         }
 
-        public static DialogCatalog CreateDialogs()
+        public static UpgradeSpec[] IdleSpecs()
         {
-            var catalog = ScriptableObject.CreateInstance<DialogCatalog>();
+            return new[]
+            {
+                Spec("idle_00_tick", "Тик", "Tick", 0.4d, 25d),
+                Spec("idle_01_flow", "Поток", "Flow", 0.8d, 210d),
+                Spec("idle_02_stream", "Струя", "Stream", 1.2d, 500d),
+                Spec("idle_03_factory", "Фабрика", "Factory", 1.6d, 1200d),
+                Spec("idle_04_engine", "Мотор", "Engine", 2.0d, 2400d),
+                Spec("idle_05_core", "Ядро", "Core", 2.4d, 4000d),
+                Spec("idle_06_reactor", "Реактор", "Reactor", 2.8d, 6200d),
+                Spec("idle_07_dynamo", "Динамо", "Dynamo", 3.2d, 9000d),
+                Spec("idle_08_orbit", "Орбита", "Orbit", 3.6d, 12800d),
+                Spec("idle_09_pulsar", "Пульсар", "Pulsar", 4.0d, 17500d),
+                Spec("idle_10_quasar", "Квазар", "Quasar", 4.4d, 23000d),
+                Spec("idle_11_genesis", "Генезис", "Genesis", 4.8d, 29000d)
+            };
+        }
+
+        public static void FillUpgrade(UpgradeDef def, UpgradeSpec spec, UpgradeKind kind, UpgradeDef requires)
+        {
+            def.id = spec.id;
+            def.kind = kind;
+            def.nameRu = spec.nameRu;
+            def.nameEn = spec.nameEn;
+            def.powerPerCopy = spec.power;
+            def.baseCost = spec.baseCost;
+            def.costMult = 1.15d;
+            def.requires = requires;
+        }
+
+        public static void FillEnemy(EnemyDef def, string id, string ru, string en, Color color)
+        {
+            def.id = id;
+            def.nameRu = ru;
+            def.nameEn = en;
+            def.placeholderColor = color;
+        }
+
+        public static void FillDialogs(DialogCatalog catalog)
+        {
             catalog.phaseLines = new[]
             {
-                L("Лишь разминка. Дальше будет интереснее.", "Just a warm-up. It gets better."),
-                L("Один упал — двое смотрят. Не зевай.", "One is down — two are watching. Stay sharp."),
-                L("Круг замкнулся. Теперь по-настоящему.", "The circle is closed. Now it gets real."),
-                L("Вторая кожа толще. Бей сильнее.", "The second hide is thicker. Hit harder."),
-                L("Они учатся. Ты — тоже.", "They are learning. So are you."),
-                L("Половина пути по кругу. Не отпускай ритм.", "Halfway around the circle. Keep the rhythm."),
-                L("Третья стадия. Каждый удар звенит громче.", "Third stage. Every hit rings louder."),
-                L("Пассив копится. Пусть работает за тебя.", "Idle is stacking. Let it work for you."),
-                L("Ещё один круг — и финал рядом.", "One more lap — the finale is close."),
-                L("Последняя тройка. Здесь решается всё.", "The last trio. This is where it is decided."),
-                L("Предпоследний удар судьбы. Не останавливайся.", "The penultimate blow. Do not stop."),
-                L("Последняя полоска. Дожми.", "The last bar. Finish it.")
+                Line("Это всё, на что ты способен?", "Is that all you've got?"),
+                Line("Щекотно. Почти.", "Ticklish. Almost."),
+                Line("Неплохо. Для разминки.", "Not bad. For a warm-up."),
+                Line("Так, теперь я серьёзно.", "Alright, now I'm serious."),
+                Line("Ты ещё здесь? Упрямо.", "Still here? Stubborn."),
+                Line("Очки не равны победе.", "Points aren't victory."),
+                Line("Мы можем делать это часами.", "We can do this for hours."),
+                Line("Поздняя игра только начинается.", "The late game is just starting."),
+                Line("Держись. Дальше будет дольше.", "Hang on. It only gets longer."),
+                Line("Двадцать минут? Я подожду.", "Twenty minutes? I'll wait."),
+                Line("Предпоследний раунд. Не зевай.", "Second to last. Stay sharp."),
+                Line("Финал. Бей, пока я стою.", "Finale. Hit me while I'm standing.")
             };
-            catalog.victory = L(
+            catalog.victory = Line(
                 "Все противники пали. Вы прошли игру!",
                 "All opponents have fallen. You finished the game!");
-            return catalog;
         }
 
-        static UpgradeDef Click(string id, string ru, string en, double power, double cost)
+        static UpgradeSpec Spec(string id, string ru, string en, double power, double cost)
         {
-            return U(id, ru, en, false, power, cost);
+            return new UpgradeSpec { id = id, nameRu = ru, nameEn = en, power = power, baseCost = cost };
         }
 
-        static UpgradeDef Idle(string id, string ru, string en, double power, double cost)
-        {
-            return U(id, ru, en, true, power, cost);
-        }
-
-        static UpgradeDef U(string id, string ru, string en, bool idle, double power, double cost)
-        {
-            return new UpgradeDef
-            {
-                id = id,
-                nameRu = ru,
-                nameEn = en,
-                isIdle = idle,
-                powerPerCopy = power,
-                baseCost = cost,
-                costMult = 1.18d,
-                maxCopies = 12
-            };
-        }
-
-        static EnemyDef Enemy(string id, string ru, string en, Color color)
-        {
-            return new EnemyDef
-            {
-                id = id,
-                nameRu = ru,
-                nameEn = en,
-                placeholderColor = color,
-                stageSprites = new Sprite[4]
-            };
-        }
-
-        static DialogLine L(string ru, string en)
+        static DialogLine Line(string ru, string en)
         {
             return new DialogLine { ru = ru, en = en };
+        }
+
+        public struct UpgradeSpec
+        {
+            public string id;
+            public string nameRu;
+            public string nameEn;
+            public double power;
+            public double baseCost;
         }
     }
 }

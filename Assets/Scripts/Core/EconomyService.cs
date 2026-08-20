@@ -1,124 +1,136 @@
-using System;
+using System.Collections.Generic;
 using YG;
 
 namespace Clicker
 {
-    public class EconomyService
+    public sealed class EconomyService
     {
         readonly BalanceConfig _balance;
+        readonly List<UpgradeDef> _defs = new List<UpgradeDef>();
 
         public double ClickPower { get; private set; }
         public double IdlePerSecond { get; private set; }
         public double Score => YG2.saves.score;
-        public int ShopCount => _balance.ShopCount;
 
         public EconomyService(BalanceConfig balance)
         {
             _balance = balance;
+        }
+
+        public void SetDefinitions(IEnumerable<UpgradeDef> defs)
+        {
+            _defs.Clear();
+            if (defs == null)
+                return;
+            foreach (var def in defs)
+            {
+                if (def != null && !string.IsNullOrEmpty(def.id))
+                    _defs.Add(def);
+            }
+
             Recalc();
         }
 
-        public void Recalc()
+        public IReadOnlyList<UpgradeDef> Definitions => _defs;
+
+        public int GetCount(UpgradeDef def)
         {
-            SaveUtil.EnsureArrays(_balance.ShopCount);
-            double click = _balance.baseClickPower;
-            double idle = 0d;
-            int n = _balance.ShopCount;
-            for (int i = 0; i < n; i++)
+            if (def == null || string.IsNullOrEmpty(def.id) || YG2.saves.upgrades == null)
+                return 0;
+            for (int i = 0; i < YG2.saves.upgrades.Count; i++)
             {
-                var def = _balance.GetShop(i);
-                if (def == null)
-                    continue;
-                int owned = YG2.saves.shopCounts[i];
-                if (def.isIdle)
-                    idle += owned * def.powerPerCopy;
-                else
-                    click += owned * def.powerPerCopy;
+                var row = YG2.saves.upgrades[i];
+                if (row != null && row.id == def.id)
+                    return row.count;
             }
 
-            ClickPower = click;
-            IdlePerSecond = idle;
+            return 0;
         }
 
-        public void AddScore(double amount)
+        public bool IsUnlocked(UpgradeDef def)
+        {
+            if (def == null)
+                return false;
+            if (def.requires == null)
+                return true;
+            return GetCount(def.requires) >= 1;
+        }
+
+        public double GetCost(UpgradeDef def)
+        {
+            if (def == null)
+                return double.MaxValue;
+            return def.CostForOwned(GetCount(def));
+        }
+
+        public bool CanAfford(UpgradeDef def)
+        {
+            return def != null && IsUnlocked(def) && YG2.saves.score >= GetCost(def);
+        }
+
+        public bool TryBuy(UpgradeDef def)
+        {
+            if (def == null || !IsUnlocked(def))
+                return false;
+
+            double cost = GetCost(def);
+            if (YG2.saves.score < cost)
+                return false;
+
+            YG2.saves.score -= cost;
+            AddCount(def, 1);
+            Recalc();
+            return true;
+        }
+
+        public void AddIncome(double amount)
         {
             if (amount <= 0d)
                 return;
             YG2.saves.score += amount;
         }
 
-        public UpgradeDef Def(int shopIndex) => _balance.GetShop(shopIndex);
-
-        public bool IsUnlocked(int shopIndex)
+        public void Recalc()
         {
-            if (shopIndex < 0 || shopIndex >= ShopCount)
-                return false;
-            return shopIndex / 2 <= YG2.saves.phaseIndex;
+            EnsureSaveList();
+            double click = _balance != null ? _balance.baseClickPower : 1d;
+            double idle = 0d;
+            for (int i = 0; i < _defs.Count; i++)
+            {
+                var def = _defs[i];
+                int n = GetCount(def);
+                if (n <= 0)
+                    continue;
+                if (def.kind == UpgradeKind.Idle)
+                    idle += n * def.powerPerCopy;
+                else
+                    click += n * def.powerPerCopy;
+            }
+
+            ClickPower = click;
+            IdlePerSecond = idle;
         }
 
-        public bool IsMaxed(int shopIndex)
+        void AddCount(UpgradeDef def, int delta)
         {
-            var def = Def(shopIndex);
-            if (def == null)
-                return true;
-            return Owned(shopIndex) >= def.MaxCopies;
+            EnsureSaveList();
+            for (int i = 0; i < YG2.saves.upgrades.Count; i++)
+            {
+                var row = YG2.saves.upgrades[i];
+                if (row != null && row.id == def.id)
+                {
+                    row.count += delta;
+                    return;
+                }
+            }
+
+            YG2.saves.upgrades.Add(new UpgradeSave { id = def.id, count = delta });
         }
 
-        public int Owned(int shopIndex)
+        static void EnsureSaveList()
         {
-            SaveUtil.EnsureArrays(_balance.ShopCount);
-            if (shopIndex < 0 || shopIndex >= YG2.saves.shopCounts.Length)
-                return 0;
-            return YG2.saves.shopCounts[shopIndex];
-        }
-
-        public double NextCost(int shopIndex)
-        {
-            var def = Def(shopIndex);
-            if (def == null)
-                return double.MaxValue;
-            return def.CostForOwned(Owned(shopIndex));
-        }
-
-        public bool CanAfford(int shopIndex)
-        {
-            return IsUnlocked(shopIndex) && !IsMaxed(shopIndex) && YG2.saves.score + 0.0001d >= NextCost(shopIndex);
-        }
-
-        public bool TryBuy(int shopIndex)
-        {
-            if (!IsUnlocked(shopIndex) || IsMaxed(shopIndex))
-                return false;
-            var def = Def(shopIndex);
-            if (def == null)
-                return false;
-
-            double cost = def.CostForOwned(Owned(shopIndex));
-            if (YG2.saves.score < cost)
-                return false;
-
-            YG2.saves.score -= cost;
-            YG2.saves.shopCounts[shopIndex]++;
-            Recalc();
-            return true;
-        }
-    }
-
-    public static class SaveUtil
-    {
-        public static void EnsureArrays(int shopCount = BalanceDefaults.ShopCount)
-        {
-            YG2.saves.shopCounts = Resize(YG2.saves.shopCounts, shopCount);
-        }
-
-        static int[] Resize(int[] source, int length)
-        {
-            if (source != null && source.Length == length)
-                return source;
-            var next = new int[length];
-            if (source != null)
-                Array.Copy(source, next, Math.Min(source.Length, length));
-            return next;
+            if (YG2.saves.upgrades == null)
+                YG2.saves.upgrades = new List<UpgradeSave>();
         }
     }
 }

@@ -1,5 +1,0 @@
-Drop enemy sprites here, then assign them on the Enemy Catalog asset (Clicker/Create Default Data Assets).
-
-3 enemies x 4 health stages = 12 sprites.
-Optional: background image on EnemyCatalog.background.
-Upgrade icons are not required; shop is text-based.
