@@ -24,7 +24,7 @@ namespace Clicker.EditorTools
 
             if (GUILayout.Button("Simulate default numbers"))
             {
-                var cfg = BalanceDefaults.CreateBalance();
+                var cfg = _config != null ? _config : BalanceDefaults.CreateBalance();
                 _report = BalanceSimulator.Run(cfg, _cps);
             }
 
@@ -60,8 +60,8 @@ namespace Clicker.EditorTools
             }
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Click owned", string.Join(", ", _report.clickOwned));
-            EditorGUILayout.LabelField("Idle owned", string.Join(", ", _report.idleOwned));
+            if (_report.shopOwned != null)
+                EditorGUILayout.LabelField("Shop owned", string.Join(", ", _report.shopOwned));
             EditorGUILayout.EndScrollView();
         }
     }

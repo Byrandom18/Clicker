@@ -7,8 +7,7 @@ namespace YG
         public int phaseIndex;
         public double hpLeft;
         public double pendingOverflow;
-        public int[] clickCounts = new int[12];
-        public int[] idleCounts = new int[12];
+        public int[] shopCounts = new int[24];
         public bool muted;
         public bool gameWon;
     }

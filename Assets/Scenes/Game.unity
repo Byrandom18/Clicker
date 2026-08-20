@@ -216,6 +216,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1500000002}
   - component: {fileID: 1500000003}
+  - component: {fileID: 1500000004}
   m_Layer: 0
   m_Name: ClickerRoot
   m_TagString: Untagged
@@ -248,7 +249,21 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b7e41c90a2d64f1e9c5a8f3d0b17e246, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Clicker.ClickerGame 
+  m_EditorClassIdentifier: Clicker.ClickerGame
   balance: {fileID: 0}
   enemies: {fileID: 0}
   dialogs: {fileID: 0}
+  view: {fileID: 1500000004}
+--- !u!114 &1500000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c11de6af27f715444b2cdcb8d0b7b0a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Clicker.ClickerView
+

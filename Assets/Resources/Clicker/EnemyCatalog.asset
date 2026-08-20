@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cb8cda81c713d5408cbb4c3a42b5023, type: 3}
+  m_Name: EnemyCatalog
+  m_EditorClassIdentifier: Clicker.EnemyCatalog
+  background: {fileID: 0}
+  enemies:
+  - id: scarlet
+    nameRu: "\u0410\u043B\u044B\u0439"
+    nameEn: Scarlet
+    placeholderColor: {r: 0.91, g: 0.36, b: 0.3, a: 1}
+    stageSprites:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - id: azure
+    nameRu: "\u041B\u0430\u0437\u0443\u0440\u043D\u044B\u0439"
+    nameEn: Azure
+    placeholderColor: {r: 0.3, g: 0.8, b: 0.77, a: 1}
+    stageSprites:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+  - id: amber
+    nameRu: "\u042F\u043D\u0442\u0430\u0440\u043D\u044B\u0439"
+    nameEn: Amber
+    placeholderColor: {r: 0.96, g: 0.83, b: 0.37, a: 1}
+    stageSprites:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}

@@ -19,8 +19,7 @@ namespace Clicker
             public PhaseReport[] phases;
             public double totalSeconds;
             public double targetTotal;
-            public int[] clickOwned;
-            public int[] idleOwned;
+            public int[] shopOwned;
         }
 
         public static Report Run(BalanceConfig config, double clicksPerSecond = 3d, double dt = 0.25d)
@@ -29,16 +28,14 @@ namespace Clicker
                 config = BalanceDefaults.CreateBalance();
 
             int n = Mathf.Max(1, config.phaseCount);
-            var clickOwned = new int[config.UpgradeCount];
-            var idleOwned = new int[config.UpgradeCount];
+            int shopN = Mathf.Max(1, config.ShopCount);
+            var owned = new int[shopN];
             double score = 0d;
             double clickPower = config.baseClickPower;
             double idlePower = 0d;
             double time = 0d;
-
             var phases = new PhaseReport[n];
-
-            Recalc(config, clickOwned, idleOwned, out clickPower, out idlePower);
+            Recalc(config, owned, out clickPower, out idlePower);
 
             for (int phase = 0; phase < n; phase++)
             {
@@ -54,7 +51,7 @@ namespace Clicker
                     score += earned;
                     hp -= earned;
                     time += dt;
-                    TryBuys(config, clicksPerSecond, ref score, clickOwned, idleOwned, ref clickPower, ref idlePower);
+                    TryBuys(config, clicksPerSecond, phase, ref score, owned, ref clickPower, ref idlePower);
                     guard++;
                 }
 
@@ -80,92 +77,99 @@ namespace Clicker
                 phases = phases,
                 totalSeconds = time,
                 targetTotal = targetTotal,
-                clickOwned = clickOwned,
-                idleOwned = idleOwned
+                shopOwned = owned
             };
         }
 
-        static void Recalc(BalanceConfig config, int[] clickOwned, int[] idleOwned, out double clickPower, out double idlePower)
+        static void Recalc(BalanceConfig config, int[] owned, out double clickPower, out double idlePower)
         {
             clickPower = config.baseClickPower;
             idlePower = 0d;
-            int count = config.UpgradeCount;
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < owned.Length; i++)
             {
-                var click = config.GetClick(i);
-                if (click != null)
-                    clickPower += clickOwned[i] * click.powerPerCopy;
-                var idle = config.GetIdle(i);
-                if (idle != null)
-                    idlePower += idleOwned[i] * idle.powerPerCopy;
+                var def = config.GetShop(i);
+                if (def == null)
+                    continue;
+                if (def.isIdle)
+                    idlePower += owned[i] * def.powerPerCopy;
+                else
+                    clickPower += owned[i] * def.powerPerCopy;
             }
+        }
+
+        static bool Unlocked(int shopIndex, int phase) => shopIndex / 2 <= phase;
+
+        static bool Maxed(UpgradeDef def, int ownedCount)
+        {
+            return def != null && ownedCount >= def.MaxCopies;
         }
 
         static void TryBuys(
             BalanceConfig config,
             double cps,
+            int phase,
             ref double score,
-            int[] clickOwned,
-            int[] idleOwned,
+            int[] owned,
             ref double clickPower,
             ref double idlePower)
         {
             for (int n = 0; n < 48; n++)
             {
-                int bestKind = -1;
-                int bestIndex = -1;
+                int nextNew = -1;
+                for (int i = 0; i < owned.Length; i++)
+                {
+                    if (Unlocked(i, phase) && owned[i] == 0)
+                    {
+                        nextNew = i;
+                        break;
+                    }
+                }
+
+                if (nextNew >= 0)
+                {
+                    var def = config.GetShop(nextNew);
+                    if (def != null && !Maxed(def, owned[nextNew]))
+                    {
+                        double cost = def.CostForOwned(owned[nextNew]);
+                        if (score >= cost)
+                        {
+                            score -= cost;
+                            owned[nextNew]++;
+                            Recalc(config, owned, out clickPower, out idlePower);
+                            continue;
+                        }
+                    }
+                }
+
+                int best = -1;
                 double bestCost = 0d;
                 double bestEff = 0d;
-
-                for (int i = 0; i < config.UpgradeCount; i++)
+                for (int i = 0; i < owned.Length; i++)
                 {
-                    if (i > 0 && clickOwned[i - 1] < 1)
-                        break;
-                    var def = config.GetClick(i);
-                    if (def == null)
+                    if (!Unlocked(i, phase))
                         continue;
-                    double cost = def.CostForOwned(clickOwned[i]);
+                    var def = config.GetShop(i);
+                    if (def == null || Maxed(def, owned[i]))
+                        continue;
+                    double cost = def.CostForOwned(owned[i]);
                     if (score < cost)
                         continue;
-                    double eff = def.powerPerCopy * cps / cost;
+                    double dpsGain = def.isIdle ? def.powerPerCopy : def.powerPerCopy * cps;
+                    double eff = dpsGain / cost;
                     if (eff > bestEff)
                     {
                         bestEff = eff;
-                        bestKind = 0;
-                        bestIndex = i;
+                        best = i;
                         bestCost = cost;
                     }
                 }
 
-                for (int i = 0; i < config.UpgradeCount; i++)
-                {
-                    if (i > 0 && idleOwned[i - 1] < 1)
-                        break;
-                    var def = config.GetIdle(i);
-                    if (def == null)
-                        continue;
-                    double cost = def.CostForOwned(idleOwned[i]);
-                    if (score < cost)
-                        continue;
-                    double eff = def.powerPerCopy / cost;
-                    if (eff > bestEff)
-                    {
-                        bestEff = eff;
-                        bestKind = 1;
-                        bestIndex = i;
-                        bestCost = cost;
-                    }
-                }
-
-                if (bestKind < 0)
+                if (best < 0)
                     break;
 
                 score -= bestCost;
-                if (bestKind == 0)
-                    clickOwned[bestIndex]++;
-                else
-                    idleOwned[bestIndex]++;
-                Recalc(config, clickOwned, idleOwned, out clickPower, out idlePower);
+                owned[best]++;
+                Recalc(config, owned, out clickPower, out idlePower);
             }
         }
 

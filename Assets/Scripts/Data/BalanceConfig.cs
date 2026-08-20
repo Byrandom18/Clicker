@@ -13,10 +13,10 @@ namespace Clicker
         public double simulatedClicksPerSecond = 3d;
         public double[] targetPhaseSeconds;
         public float[] rewardedPercentByPhase;
-        public UpgradeDef[] clickUpgrades;
-        public UpgradeDef[] idleUpgrades;
+        [Tooltip("Единый магазин: клик, пассив, клик, пассив...")]
+        public UpgradeDef[] shop;
 
-        public int UpgradeCount => 12;
+        public int ShopCount => shop != null ? shop.Length : 0;
 
         public double GetPhaseHp(int phase)
         {
@@ -40,18 +40,11 @@ namespace Clicker
             return targetPhaseSeconds[phase];
         }
 
-        public UpgradeDef GetClick(int index)
+        public UpgradeDef GetShop(int index)
         {
-            if (clickUpgrades == null || index < 0 || index >= clickUpgrades.Length)
+            if (shop == null || index < 0 || index >= shop.Length)
                 return null;
-            return clickUpgrades[index];
-        }
-
-        public UpgradeDef GetIdle(int index)
-        {
-            if (idleUpgrades == null || index < 0 || index >= idleUpgrades.Length)
-                return null;
-            return idleUpgrades[index];
+            return shop[index];
         }
     }
 }

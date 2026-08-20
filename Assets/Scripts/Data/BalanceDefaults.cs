@@ -5,7 +5,12 @@ namespace Clicker
     public static class BalanceDefaults
     {
         public const int PhaseCount = 12;
-        public const int UpgradeCount = 12;
+        public const int ShopCount = 24;
+
+        public static readonly double[] TargetSeconds =
+        {
+            30d, 50d, 80d, 140d, 240d, 400d, 600d, 780d, 920d, 1320d, 1320d, 1320d
+        };
 
         public static BalanceConfig CreateBalance()
         {
@@ -15,10 +20,7 @@ namespace Clicker
             config.hpGrowth = 5d;
             config.baseClickPower = 1d;
             config.simulatedClicksPerSecond = 3d;
-            config.targetPhaseSeconds = new[]
-            {
-                30d, 50d, 80d, 140d, 240d, 400d, 600d, 780d, 920d, 1320d, 1320d, 1320d
-            };
+            config.targetPhaseSeconds = (double[])TargetSeconds.Clone();
             config.rewardedPercentByPhase = new[]
             {
                 0.20f, 0.20f, 0.20f,
@@ -26,35 +28,32 @@ namespace Clicker
                 0.12f, 0.12f, 0.12f,
                 0.10f, 0.10f, 0.10f
             };
-            config.clickUpgrades = new[]
+            config.shop = new[]
             {
-                U("punch", "Удар", "Punch", 1d, 20d),
-                U("combo", "Комбо", "Combo", 4d, 150d),
-                U("heavy", "Тяжёлый", "Heavy", 18d, 1.2e3),
-                U("burst", "Взрыв", "Burst", 80d, 1e4),
-                U("storm", "Шторм", "Storm", 350d, 8e4),
-                U("nova", "Нова", "Nova", 1.5e3, 6.5e5),
-                U("overload", "Перегрузка", "Overload", 7e3, 5.5e6),
-                U("breaker", "Крушитель", "Breaker", 3.2e4, 4.5e7),
-                U("cataclysm", "Катаклизм", "Cataclysm", 1.5e5, 3.8e8),
-                U("singularity", "Сингулярность", "Singularity", 7e5, 3.2e9),
-                U("omega", "Омега", "Omega", 3.2e6, 2.8e10),
-                U("transcend", "Трансценденция", "Transcend", 1.5e7, 2.4e11)
-            };
-            config.idleUpgrades = new[]
-            {
-                U("tick", "Тик", "Tick", 0.5d, 40d),
-                U("flow", "Поток", "Flow", 2.5d, 300d),
-                U("stream", "Струя", "Stream", 12d, 2.5e3),
-                U("factory", "Фабрика", "Factory", 55d, 2e4),
-                U("engine", "Мотор", "Engine", 250d, 1.6e5),
-                U("core", "Ядро", "Core", 1.1e3, 1.3e6),
-                U("reactor", "Реактор", "Reactor", 5e3, 1.1e7),
-                U("dynamo", "Динамо", "Dynamo", 2.3e4, 9e7),
-                U("orbit", "Орбита", "Orbit", 1.05e5, 7.5e8),
-                U("pulsar", "Пульсар", "Pulsar", 4.8e5, 6.5e9),
-                U("quasar", "Квазар", "Quasar", 2.2e6, 5.5e10),
-                U("genesis", "Генезис", "Genesis", 1e7, 4.8e11)
+                Click("punch", "Удар", "Punch", 0.25d, 15d),
+                Idle("tick", "Тик", "Tick", 0.20d, 22d),
+                Click("combo", "Комбо", "Combo", 0.75d, 40d),
+                Idle("flow", "Поток", "Flow", 0.90d, 55d),
+                Click("heavy", "Тяжёлый", "Heavy", 2.20d, 120d),
+                Idle("stream", "Струя", "Stream", 3.00d, 170d),
+                Click("burst", "Взрыв", "Burst", 3.00d, 340d),
+                Idle("factory", "Фабрика", "Factory", 4.50d, 480d),
+                Click("storm", "Шторм", "Storm", 6.00d, 950d),
+                Idle("engine", "Мотор", "Engine", 9.00d, 1350d),
+                Click("nova", "Нова", "Nova", 14d, 2800d),
+                Idle("core", "Ядро", "Core", 22d, 3900d),
+                Click("overload", "Перегрузка", "Overload", 38d, 9000d),
+                Idle("reactor", "Реактор", "Reactor", 62d, 12500d),
+                Click("breaker", "Крушитель", "Breaker", 140d, 34000d),
+                Idle("dynamo", "Динамо", "Dynamo", 240d, 48000d),
+                Click("cataclysm", "Катаклизм", "Cataclysm", 700d, 1.5e5),
+                Idle("orbit", "Орбита", "Orbit", 1200d, 2.1e5),
+                Click("singularity", "Сингулярность", "Singularity", 2500d, 5.2e5),
+                Idle("pulsar", "Пульсар", "Pulsar", 4500d, 7.3e5),
+                Click("omega", "Омега", "Omega", 15000d, 2.6e6),
+                Idle("quasar", "Квазар", "Quasar", 28000d, 3.6e6),
+                Click("transcend", "Трансценденция", "Transcend", 60000d, 1.4e7),
+                Idle("genesis", "Генезис", "Genesis", 120000d, 2.0e7)
             };
             return config;
         }
@@ -95,16 +94,28 @@ namespace Clicker
             return catalog;
         }
 
-        static UpgradeDef U(string id, string ru, string en, double power, double cost)
+        static UpgradeDef Click(string id, string ru, string en, double power, double cost)
+        {
+            return U(id, ru, en, false, power, cost);
+        }
+
+        static UpgradeDef Idle(string id, string ru, string en, double power, double cost)
+        {
+            return U(id, ru, en, true, power, cost);
+        }
+
+        static UpgradeDef U(string id, string ru, string en, bool idle, double power, double cost)
         {
             return new UpgradeDef
             {
                 id = id,
                 nameRu = ru,
                 nameEn = en,
+                isIdle = idle,
                 powerPerCopy = power,
                 baseCost = cost,
-                costMult = 1.15d
+                costMult = 1.18d,
+                maxCopies = 12
             };
         }
 

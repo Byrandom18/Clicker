@@ -1,0 +1,135 @@
+Настройка сцены кликера (без генерации UI из кода)
+================================================
+
+Сцена: Assets/Scenes/Game.unity
+Тексты — Legacy UI Text (UnityEngine.UI.Text), не TextMeshPro.
+Кнопки и картинки — UnityEngine.UI.Button / Image.
+
+0. Данные
+   В сцене уже есть ClickerRoot (ClickerGame + ClickerView).
+   В инспекторе ClickerGame перетащите:
+   - Balance  → Assets/Resources/Clicker/BalanceConfig
+   - Enemies  → Assets/Resources/Clicker/EnemyCatalog
+   - Dialogs  → Assets/Resources/Clicker/DialogCatalog
+   - View     → тот же ClickerView на ClickerRoot
+   Если поля Balance/Enemies/Dialogs пустые, игра всё равно возьмёт эти ассеты из Resources.
+
+   На EnemyCatalog: 3 врага × 4 спрайта стадий (Element 0…3) и опционально Background.
+   Спрайты кладите в Assets/Graphics/Art/. Пока спрайтов нет, используются placeholderColor.
+
+
+1. EventSystem (корень сцены, если его ещё нет)
+   GameObject → UI → Event System
+   Компоненты: Event System + Input System UI Input Module
+   (проект на Input System, activeInputHandler = Both)
+
+
+2. Canvas (корень сцены)
+   UI → Canvas, имя любое (например ClickerCanvas)
+   Canvas: Screen Space Overlay
+   Canvas Scaler: Scale With Screen Size, Reference 1920×1080, Match 0.5
+   Graphic Raycaster: по умолчанию
+   Слой UI
+
+
+3. Иерархия (дети Canvas, сверху вниз по отрисовке)
+
+   Background          Image на весь экран (якоря 0,0–1,1)
+   TopBar              пустой RectTransform сверху слева (~72% ширины)
+     ScoreText         Text, крупный
+     PowerText         Text, сила клика и пассив
+     HowToText         Text, подсказка справа
+   Dots                12 штук Image в ряд (прогресс 12 полосок)
+     Dot0 … Dot11
+   MuteButton          Button
+     Label             Text
+   RewardedButton      Button снизу слева
+     Label             Text
+   Arena               область боя ~левые 72% экрана
+     Enemy_0           Image + дочерний Name (Text)     ← враг A, индекс 0
+     Enemy_1           Image + Name                     ← враг B, индекс 1
+     Enemy_2           Image + Name                     ← враг C, индекс 2
+     HpBar             Image-фон полоски HP
+       Fill            Image, Type = Filled, Method = Horizontal
+       HpText          Text поверх полоски
+     ClickCatcher      Image с alpha 0 + Button (клик по центру)
+   Shop                панель справа ~28% ширины
+     Title             Text «Улучшения» (можно заглушку, код перезапишет)
+     Viewport          Image + Mask + Scroll Rect (только вертикаль)
+       Content         Vertical Layout Group + Content Size Fitter (Vertical Preferred)
+         Row_00 … Row_23   24 одинаковых строки магазина (см. п.4)
+   Dialog              выключен (галка Active снята)
+     Box
+       Text            реплика
+       ContinueButton  Button «Далее»
+         Label         Text
+   Victory             выключен
+     Title             Text
+     Body              Text
+
+
+4. Одна строка магазина (Row_00 … Row_23)
+   Компоненты на корне строки:
+   - Image (фон)
+   - Layout Element: Min/Preferred Height ~96
+   - ShopRowView
+   Дети:
+   - Title     Text
+   - Detail    Text
+   - Buy       Button
+       Label   Text
+       HoldPulse  (зажать = повторная покупка; если нет, код добавит в Play)
+
+   В ShopRowView: Title, Detail, Buy Button, Buy Label.
+
+   Порядок строк = порядок в BalanceConfig.shop:
+   чётные 0,2,4… клик; нечётные 1,3,5… пассив.
+   Вкладок нет, один список.
+
+
+5. Привязки ClickerView (на ClickerRoot)
+
+   HUD
+   - Background        → Background Image
+   - Score Text        → TopBar/ScoreText
+   - Power Text        → TopBar/PowerText
+   - How To Text       → TopBar/HowToText
+   - Dots Size 12      → Dot0…Dot11
+   - Mute Button/Label → MuteButton и его Text
+   - Rewarded Button/Label
+   - Shop Title        → Shop/Title
+
+   Arena
+   - Enemy Images Size 3  → Enemy_0, Enemy_1, Enemy_2 (именно Image)
+   - Enemy Names Size 3   → их Name Text
+   - Enemy Rects Size 3   → RectTransform тех же трёх Image
+   - Enemy Click Button   → Button на ClickCatcher
+   - Click Catcher        → RectTransform ClickCatcher
+   - Hp Fill              → HpBar/Fill (Filled Image)
+   - Hp Text              → HpBar/HpText
+
+   Shop
+   - Shop Rows Size 24    → Row_00 … Row_23 (компонент ShopRowView)
+
+   Dialog / Victory
+   - Dialog Root          → объект Dialog (выключенный)
+   - Dialog Text          → текст реплики
+   - Continue Button      → кнопка «Далее»
+   - Victory Root         → объект Victory (выключенный)
+   - Victory Title / Body
+
+   OnClick в инспекторе вешать не нужно: скрипт сам подписывается в Bind.
+
+
+6. Раскладка боя (рекомендация)
+   Код сам двигает якоря трёх врагов:
+   активный центр ~360×480, двое сзади по бокам ~210×280.
+   Поставьте три Image в Arena, pivot по центру снизу (0.5, 0.12).
+   ClickCatcher — широкий невидимый Button поверх центрального слота,
+   sibling последним в Arena, чтобы ловить клики.
+
+
+7. Яндекс / билд
+   Ориентация: Landscape Left (уже в Player Settings).
+   Desktop + Mobile, облачные сохранения, языки ru и en через YG2.lang.
+   Сцена Game уже в Build Settings.
