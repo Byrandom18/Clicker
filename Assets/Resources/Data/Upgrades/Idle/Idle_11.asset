@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8b5f2e372e43374999dce0ce9ecbac5, type: 3}
+  m_Name: Idle_11
+  m_EditorClassIdentifier: 
+  id: idle_11_genesis
+  kind: 1
+  nameRu: "\u0413\u0435\u043D\u0435\u0437\u0438\u0441"
+  nameEn: Genesis
+  powerPerCopy: 4.8
+  baseCost: 29000
+  costMult: 1.15
+  requires: {fileID: 11400000, guid: a1ed2486fa06d5544a8e6570fca069e2, type: 2}
+  icon: {fileID: 0}

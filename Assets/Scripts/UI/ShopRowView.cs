@@ -20,6 +20,11 @@ namespace Clicker
 
         public UpgradeDef Definition => definition;
 
+        public void SetDefinition(UpgradeDef def)
+        {
+            definition = def;
+        }
+
         void Awake()
         {
             if (buy != null)

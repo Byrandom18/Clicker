@@ -20,18 +20,34 @@ namespace Clicker
         public void SetDefinitions(IEnumerable<UpgradeDef> defs)
         {
             _defs.Clear();
-            if (defs == null)
-                return;
-            foreach (var def in defs)
+            var raw = new List<UpgradeDef>();
+            if (defs != null)
             {
-                if (def != null && !string.IsNullOrEmpty(def.id))
-                    _defs.Add(def);
+                foreach (var def in defs)
+                {
+                    if (def != null && !string.IsNullOrEmpty(def.id))
+                        raw.Add(def);
+                }
             }
 
+            _defs.AddRange(ClickerCatalog.ToShopOrder(raw));
             Recalc();
         }
 
         public IReadOnlyList<UpgradeDef> Definitions => _defs;
+
+        public int IndexOf(UpgradeDef def)
+        {
+            if (def == null)
+                return -1;
+            for (int i = 0; i < _defs.Count; i++)
+            {
+                if (_defs[i] == def || (_defs[i] != null && _defs[i].id == def.id))
+                    return i;
+            }
+
+            return -1;
+        }
 
         public int GetCount(UpgradeDef def)
         {
@@ -49,11 +65,12 @@ namespace Clicker
 
         public bool IsUnlocked(UpgradeDef def)
         {
-            if (def == null)
+            int index = IndexOf(def);
+            if (index < 0)
                 return false;
-            if (def.requires == null)
+            if (index == 0)
                 return true;
-            return GetCount(def.requires) >= 1;
+            return GetCount(_defs[index - 1]) >= 1;
         }
 
         public double GetCost(UpgradeDef def)

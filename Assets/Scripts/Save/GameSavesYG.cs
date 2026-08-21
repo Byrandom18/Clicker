@@ -13,6 +13,7 @@ namespace YG
     public partial class SavesYG
     {
         public bool clickerInitialized;
+        public int clickerSaveVersion;
         public double score;
         public int phaseIndex;
         public double hpLeft = -1d;

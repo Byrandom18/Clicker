@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8b5f2e372e43374999dce0ce9ecbac5, type: 3}
+  m_Name: Idle_00
+  m_EditorClassIdentifier: 
+  id: idle_00_tick
+  kind: 1
+  nameRu: "\u0422\u0438\u043A"
+  nameEn: Tick
+  powerPerCopy: 0.4
+  baseCost: 25
+  costMult: 1.15
+  requires: {fileID: 0}
+  icon: {fileID: 0}

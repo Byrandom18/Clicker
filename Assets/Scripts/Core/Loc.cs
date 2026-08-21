@@ -43,16 +43,7 @@ namespace Clicker
         public static string VictoryBody => T(
             "Все противники пали. Вы прошли игру!",
             "All opponents have fallen. You finished the game!");
-        public static string MuteOn => T("Звук выкл.", "Sound off");
-        public static string MuteOff => T("Звук вкл.", "Sound on");
-        public static string ShopClick => T("Клик", "Click");
-        public static string ShopIdle => T("Пассив", "Idle");
-
-        public static string RewardedButton(float percent)
-        {
-            string pct = NumberFormatter.FormatPercent(percent);
-            return T($"−{pct} HP за рекламу", $"-{pct} HP for a video ad");
-        }
+        public static string MegaAttack => T("МЕГА-АТАКА ЗА РЕКЛАМУ", "MEGA ATTACK FOR AN AD");
 
         public static string PlusPower(double power, bool idle)
         {

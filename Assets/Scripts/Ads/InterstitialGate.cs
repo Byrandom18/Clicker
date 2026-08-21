@@ -9,7 +9,7 @@ namespace Clicker
     {
         readonly MonoBehaviour _host;
         Action _onDone;
-        Coroutine _safety;
+        Coroutine _wait;
 
         public InterstitialGate(MonoBehaviour host)
         {
@@ -20,36 +20,52 @@ namespace Clicker
         {
             Cancel();
             _onDone = onDone;
+
             YG2.onCloseInterAdvWasShow += HandleClosed;
+            YG2.onErrorInterAdv += HandleError;
             YG2.InterstitialAdvShow();
-            _safety = _host.StartCoroutine(Safety());
+            _wait = _host.StartCoroutine(WaitForCloseOrSkip());
         }
 
         public void Cancel()
         {
             YG2.onCloseInterAdvWasShow -= HandleClosed;
-            if (_safety != null && _host != null)
-                _host.StopCoroutine(_safety);
-            _safety = null;
+            YG2.onErrorInterAdv -= HandleError;
+            if (_wait != null && _host != null)
+                _host.StopCoroutine(_wait);
+            _wait = null;
             _onDone = null;
         }
 
-        void HandleClosed(bool wasShown)
+        void HandleClosed(bool _)
         {
             Finish();
         }
 
-        IEnumerator Safety()
+        void HandleError()
         {
+            Finish();
+        }
+
+        IEnumerator WaitForCloseOrSkip()
+        {
+            yield return null;
+            yield return null;
+
+            if (!YG2.nowAdsShow)
+            {
+                Finish();
+                yield break;
+            }
+
             float t = 0f;
-            while (t < 0.45f && !YG2.nowAdsShow)
+            while (t < 120f && YG2.nowAdsShow)
             {
                 t += Time.unscaledDeltaTime;
                 yield return null;
             }
 
-            if (!YG2.nowAdsShow)
-                Finish();
+            Finish();
         }
 
         void Finish()

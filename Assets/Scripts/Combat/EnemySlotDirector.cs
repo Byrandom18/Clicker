@@ -12,6 +12,7 @@ namespace Clicker
         [SerializeField] EnemyView enemyA;
         [SerializeField] EnemyView enemyB;
         [SerializeField] EnemyView enemyC;
+        [SerializeField] GameObject enemyPrefab;
         [SerializeField] float duration = 0.6f;
         [SerializeField] Ease ease = Ease.InOutQuad;
 
@@ -19,6 +20,74 @@ namespace Clicker
         Sequence _seq;
 
         public EnemyView[] Enemies => new[] { enemyA, enemyB, enemyC };
+
+        public void EnsureBound()
+        {
+            if (slotLeft == null)
+                slotLeft = transform.Find("SlotLeft");
+            if (slotCenter == null)
+                slotCenter = transform.Find("SlotCenter");
+            if (slotRight == null)
+                slotRight = transform.Find("SlotRight");
+
+            if (enemyA == null)
+                enemyA = FindOrSpawn("EnemyA", "enemy_a");
+            if (enemyB == null)
+                enemyB = FindOrSpawn("EnemyB", "enemy_b");
+            if (enemyC == null)
+                enemyC = FindOrSpawn("EnemyC", "enemy_c");
+
+            ApplyDefinitions();
+        }
+
+        void ApplyDefinitions()
+        {
+            AssignDef(enemyA, "enemy_a");
+            AssignDef(enemyB, "enemy_b");
+            AssignDef(enemyC, "enemy_c");
+        }
+
+        static void AssignDef(EnemyView view, string id)
+        {
+            if (view == null)
+                return;
+            if (view.Definition == null)
+                view.SetDefinition(ClickerCatalog.FindEnemy(id));
+        }
+
+        EnemyView FindOrSpawn(string objectName, string defId)
+        {
+            var existing = FindInScene(objectName);
+            if (existing != null)
+                return existing;
+
+            GameObject prefab = enemyPrefab != null ? enemyPrefab : ClickerCatalog.LoadEnemyPrefab();
+            if (prefab == null)
+            {
+                Debug.LogError("Clicker: EnemyView prefab missing. Put it at Assets/Prefabs or Assets/Resources/Prefabs.");
+                return null;
+            }
+
+            var go = Instantiate(prefab);
+            go.name = objectName;
+            var view = go.GetComponent<EnemyView>();
+            if (view != null)
+                view.SetDefinition(ClickerCatalog.FindEnemy(defId));
+            return view;
+        }
+
+        static EnemyView FindInScene(string objectName)
+        {
+            var views = FindObjectsByType<EnemyView>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < views.Length; i++)
+            {
+                var view = views[i];
+                if (view != null && view.gameObject.scene.IsValid() && view.gameObject.name == objectName)
+                    return view;
+            }
+
+            return null;
+        }
 
         public EnemyView GetEnemy(int index)
         {
@@ -50,8 +119,9 @@ namespace Clicker
                 if (view == null || slot == null)
                     continue;
                 bool center = i == toPhase % 3;
-                _seq.Join(view.transform.DOMove(slot.position, duration).SetEase(ease));
-                _seq.Join(view.transform.DOScale(slot.localScale, duration).SetEase(ease));
+                view.transform.SetParent(slot, true);
+                _seq.Join(view.transform.DOLocalMove(Vector3.zero, duration).SetEase(ease));
+                _seq.Join(view.transform.DOScale(Vector3.one, duration).SetEase(ease));
                 if (view.Renderer != null)
                     _seq.Join(view.Renderer.DOColor(center ? Color.white : Dim, duration).SetEase(ease));
             }
@@ -87,8 +157,10 @@ namespace Clicker
                 bool center = i == phaseIndex % 3;
                 if (snap)
                 {
-                    view.transform.position = slot.position;
-                    view.transform.localScale = slot.localScale;
+                    view.transform.SetParent(slot, false);
+                    view.transform.localPosition = Vector3.zero;
+                    view.transform.localRotation = Quaternion.identity;
+                    view.transform.localScale = Vector3.one;
                     if (view.Renderer != null)
                         view.Renderer.color = center ? Color.white : Dim;
                 }

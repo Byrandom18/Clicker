@@ -4,8 +4,8 @@ using YG;
 
 namespace Clicker
 {
-    // Scene wiring (you assemble Canvas): Clicker/Create Default Data Assets,
-    // Clicker/Create Prefabs, Clicker/Add World Objects To Open Scene.
+    // Scene: GameRoot/ClickerGame. Data lives in Assets/Resources/Data.
+    // Prefabs: Assets/Prefabs. Missing inspector refs are resolved at boot.
     public class ClickerGame : MonoBehaviour
     {
         [Header("Data")]
@@ -28,13 +28,35 @@ namespace Clicker
         bool _booted;
         bool _blockPlay;
         bool _dirty;
-        float _lastSave = -10f;
+        float _lastSave;
         float _hudAcc;
+        const float AutoSaveInterval = 30f;
 
         void Awake()
         {
             Application.targetFrameRate = 60;
+            ResolveSceneRefs();
+            if (balance == null)
+                balance = ClickerCatalog.LoadBalance();
+            if (dialogs == null)
+                dialogs = ClickerCatalog.LoadDialogs();
             _ads = new InterstitialGate(this);
+        }
+
+        void ResolveSceneRefs()
+        {
+            if (slots == null)
+                slots = FindFirstObjectByType<EnemySlotDirector>(FindObjectsInactive.Include);
+            if (battleZone == null)
+                battleZone = FindFirstObjectByType<BattleZoneClick>(FindObjectsInactive.Include);
+            if (shop == null)
+                shop = FindFirstObjectByType<ShopView>(FindObjectsInactive.Include);
+            if (hud == null)
+                hud = FindFirstObjectByType<HudView>(FindObjectsInactive.Include);
+            if (bubble == null)
+                bubble = FindFirstObjectByType<SpeechBubbleView>(FindObjectsInactive.Include);
+            if (victory == null)
+                victory = FindFirstObjectByType<VictoryView>(FindObjectsInactive.Include);
         }
 
         void OnEnable()
@@ -67,6 +89,24 @@ namespace Clicker
         void OnDestroy()
         {
             YG2.onGetSDKData -= Boot;
+            FlushSave();
+        }
+
+        void OnApplicationQuit()
+        {
+            FlushSave();
+        }
+
+        void OnApplicationPause(bool pause)
+        {
+            if (pause)
+                FlushSave();
+        }
+
+        void OnApplicationFocus(bool focused)
+        {
+            if (!focused)
+                FlushSave();
         }
 
         void Update()
@@ -105,31 +145,39 @@ namespace Clicker
 
             if (balance == null)
             {
-                Debug.LogError("ClickerGame: assign BalanceConfig.");
+                Debug.LogError("ClickerGame: BalanceConfig not assigned and Resources/Data/Balance missing.");
                 return;
             }
 
             _economy = new EconomyService(balance);
             _combat = new CombatService(balance);
+            bool wiped = ClickerSave.Sanitize();
             _combat.InitFromSave();
+            if (wiped)
+                FlushSave();
 
+            if (slots != null)
+                slots.EnsureBound();
+
+            var catalog = ClickerCatalog.LoadUpgrades();
             if (shop != null)
             {
                 shop.Collect();
-                var defs = new List<UpgradeDef>();
-                var rows = shop.Rows;
-                for (int i = 0; i < rows.Length; i++)
+                if (catalog.Length == 0)
                 {
-                    if (rows[i] != null && rows[i].Definition != null)
-                        defs.Add(rows[i].Definition);
-                }
+                    var defs = new List<UpgradeDef>();
+                    var rows = shop.Rows;
+                    for (int i = 0; i < rows.Length; i++)
+                    {
+                        if (rows[i] != null && rows[i].Definition != null)
+                            defs.Add(rows[i].Definition);
+                    }
 
-                _economy.SetDefinitions(defs);
+                    catalog = defs.ToArray();
+                }
             }
-            else
-            {
-                _economy.Recalc();
-            }
+
+            _economy.SetDefinitions(catalog);
 
             ApplyMute(YG2.saves.muted, false);
             if (slots != null)
@@ -226,7 +274,8 @@ namespace Clicker
 
         void ToggleMute()
         {
-            ApplyMute(!YG2.saves.muted, true);
+            ApplyMute(!YG2.saves.muted, false);
+            _dirty = true;
             RefreshUi();
         }
 
@@ -311,6 +360,7 @@ namespace Clicker
                 return;
             }
 
+            _blockPlay = false;
             if (slots != null)
                 slots.SnapToPhase(_combat.PhaseIndex);
             RefreshEnemySprites(false);
@@ -359,10 +409,7 @@ namespace Clicker
             if (shop != null)
                 shop.Refresh(_economy);
             if (hud != null)
-            {
-                float pct = balance != null ? balance.GetRewardedPercent(_combat.PhaseIndex) : 0.1f;
-                hud.Refresh(_economy, _combat, pct, YG2.saves.muted);
-            }
+                hud.Refresh(_economy, _combat, YG2.saves.muted);
         }
 
         void HandleLang(string _)
@@ -378,9 +425,18 @@ namespace Clicker
 
         void MaybeSave(bool force)
         {
+            if (!_booted)
+                return;
             if (!force && !_dirty)
                 return;
-            if (!force && Time.unscaledTime - _lastSave < 1f)
+            if (!force && Time.unscaledTime - _lastSave < AutoSaveInterval)
+                return;
+            FlushSave();
+        }
+
+        void FlushSave()
+        {
+            if (!_booted)
                 return;
             YG2.SaveProgress();
             _lastSave = Time.unscaledTime;

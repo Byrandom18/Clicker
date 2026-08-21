@@ -24,15 +24,15 @@ namespace Clicker.EditorTools
 
             if (GUILayout.Button("Load default Balance.asset"))
             {
-                _config = AssetDatabase.LoadAssetAtPath<BalanceConfig>("Assets/Clicker/Data/Balance.asset");
+                _config = AssetDatabase.LoadAssetAtPath<BalanceConfig>(ClickerPaths.Balance);
             }
 
             if (GUILayout.Button("Simulate 2h path"))
             {
                 if (_config == null)
-                    _config = AssetDatabase.LoadAssetAtPath<BalanceConfig>("Assets/Clicker/Data/Balance.asset");
-                var click = LoadUpgrades("Assets/Clicker/Data/Upgrades/Click");
-                var idle = LoadUpgrades("Assets/Clicker/Data/Upgrades/Idle");
+                    _config = AssetDatabase.LoadAssetAtPath<BalanceConfig>(ClickerPaths.Balance);
+                var click = LoadUpgrades(ClickerPaths.ClickDir);
+                var idle = LoadUpgrades(ClickerPaths.IdleDir);
                 var report = BalanceSimulator.Run(_config, click, idle, _cps);
                 _report = Format(report);
             }
@@ -40,8 +40,8 @@ namespace Clicker.EditorTools
             if (GUILayout.Button("Fit phase HP to target total time") && _config != null)
             {
                 Undo.RecordObject(_config, "Fit clicker HP");
-                var click = LoadUpgrades("Assets/Clicker/Data/Upgrades/Click");
-                var idle = LoadUpgrades("Assets/Clicker/Data/Upgrades/Idle");
+                var click = LoadUpgrades(ClickerPaths.ClickDir);
+                var idle = LoadUpgrades(ClickerPaths.IdleDir);
                 BalanceSimulator.FitPhaseHp(_config, click, idle, _cps);
                 EditorUtility.SetDirty(_config);
                 _report = Format(BalanceSimulator.Run(_config, click, idle, _cps));

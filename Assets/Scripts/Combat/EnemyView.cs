@@ -36,6 +36,12 @@ namespace Clicker
             definition = def;
         }
 
+        public void BindRenderer(SpriteRenderer renderer, Transform head)
+        {
+            spriteRenderer = renderer;
+            headAnchor = head;
+        }
+
         public void ApplyStage(int stageIndex)
         {
             if (spriteRenderer == null)

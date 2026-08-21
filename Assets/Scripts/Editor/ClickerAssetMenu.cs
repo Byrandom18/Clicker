@@ -8,26 +8,21 @@ namespace Clicker.EditorTools
 {
     public static class ClickerAssetMenu
     {
-        const string DataRoot = "Assets/Clicker/Data";
-        const string ClickDir = DataRoot + "/Upgrades/Click";
-        const string IdleDir = DataRoot + "/Upgrades/Idle";
-        const string EnemyDir = DataRoot + "/Enemies";
-
         [MenuItem("Clicker/Create Default Data Assets")]
         public static void CreateDefaultData()
         {
-            EnsureFolder("Assets/Clicker");
-            EnsureFolder(DataRoot);
-            EnsureFolder(DataRoot + "/Upgrades");
-            EnsureFolder(ClickDir);
-            EnsureFolder(IdleDir);
-            EnsureFolder(EnemyDir);
+            EnsureFolder("Assets/Resources");
+            EnsureFolder(ClickerPaths.DataRoot);
+            EnsureFolder(ClickerPaths.DataRoot + "/Upgrades");
+            EnsureFolder(ClickerPaths.ClickDir);
+            EnsureFolder(ClickerPaths.IdleDir);
+            EnsureFolder(ClickerPaths.EnemyDir);
 
-            var balance = LoadOrCreate<BalanceConfig>(DataRoot + "/Balance.asset");
+            var balance = LoadOrCreate<BalanceConfig>(ClickerPaths.Balance);
             BalanceDefaults.ApplyTo(balance);
             EditorUtility.SetDirty(balance);
 
-            var dialogs = LoadOrCreate<DialogCatalog>(DataRoot + "/Dialogs.asset");
+            var dialogs = LoadOrCreate<DialogCatalog>(ClickerPaths.Dialogs);
             BalanceDefaults.FillDialogs(dialogs);
             EditorUtility.SetDirty(dialogs);
 
@@ -35,32 +30,30 @@ namespace Clicker.EditorTools
             CreateEnemy("EnemyB.asset", "enemy_b", "Лазурный", "Azure", new Color(0.25f, 0.45f, 0.9f));
             CreateEnemy("EnemyC.asset", "enemy_c", "Янтарный", "Amber", new Color(0.92f, 0.7f, 0.2f));
 
-            CreateChain(BalanceDefaults.ClickSpecs(), UpgradeKind.Click, ClickDir, "Click");
-            CreateChain(BalanceDefaults.IdleSpecs(), UpgradeKind.Idle, IdleDir, "Idle");
+            CreateChain(BalanceDefaults.ClickSpecs(), UpgradeKind.Click, ClickerPaths.ClickDir, "Click");
+            CreateChain(BalanceDefaults.IdleSpecs(), UpgradeKind.Idle, ClickerPaths.IdleDir, "Idle");
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log("Clicker: default data assets created under Assets/Clicker/Data.");
+            Debug.Log("Clicker: default data assets created under Assets/Resources/Data.");
         }
 
         static void CreateEnemy(string file, string id, string ru, string en, Color color)
         {
-            var def = LoadOrCreate<EnemyDef>(EnemyDir + "/" + file);
+            var def = LoadOrCreate<EnemyDef>(ClickerPaths.EnemyDir + "/" + file);
             BalanceDefaults.FillEnemy(def, id, ru, en, color);
             EditorUtility.SetDirty(def);
         }
 
         static void CreateChain(BalanceDefaults.UpgradeSpec[] specs, UpgradeKind kind, string dir, string prefix)
         {
-            UpgradeDef prev = null;
             for (int i = 0; i < specs.Length; i++)
             {
                 var spec = specs[i];
                 string path = $"{dir}/{prefix}_{i:00}.asset";
                 var def = LoadOrCreate<UpgradeDef>(path);
-                BalanceDefaults.FillUpgrade(def, spec, kind, prev);
+                BalanceDefaults.FillUpgrade(def, spec, kind, null);
                 EditorUtility.SetDirty(def);
-                prev = def;
             }
         }
 

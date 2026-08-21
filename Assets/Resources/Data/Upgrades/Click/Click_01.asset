@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8b5f2e372e43374999dce0ce9ecbac5, type: 3}
+  m_Name: Click_01
+  m_EditorClassIdentifier: 
+  id: click_01_combo
+  kind: 0
+  nameRu: "\u0421\u0435\u0440\u0438\u044F"
+  nameEn: Combo
+  powerPerCopy: 2
+  baseCost: 130
+  costMult: 1.15
+  requires: {fileID: 11400000, guid: 498b34bbf4adc9d48860aca43fa906a9, type: 2}
+  icon: {fileID: 0}

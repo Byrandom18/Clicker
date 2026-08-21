@@ -13,6 +13,7 @@ namespace Clicker
         public double HpLeft => YG2.saves.hpLeft;
         public double HpMax => _balance != null ? _balance.GetPhaseHp(PhaseIndex) : 1d;
         public int ActiveEnemyIndex => PhaseIndex % 3;
+        public int ActiveStageIndex => PhaseIndex / 3;
         public int PhaseCount => _balance != null && _balance.phaseCount > 0 ? _balance.phaseCount : BalanceDefaults.PhaseCount;
 
         public CombatService(BalanceConfig balance)
