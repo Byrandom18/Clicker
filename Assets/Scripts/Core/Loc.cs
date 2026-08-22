@@ -30,13 +30,13 @@ namespace Clicker
 
         public static string Score => T("Очки", "Score");
         public static string ClickPower => T("Сила клика", "Click power");
-        public static string IdlePower => T("Пассив", "Idle");
+        public static string IdlePower => T("Авто", "Auto");
         public static string PerSecond => T("/с", "/s");
         public static string Shop => T("Улучшения", "Upgrades");
         public static string TabClick => T("Клик", "Click");
-        public static string TabIdle => T("Пассив", "Idle");
+        public static string TabIdle => T("Авто", "Auto");
         public static string Buy => T("Купить", "Buy");
-        public static string Locked => T("Купите предыдущее", "Buy the previous upgrade");
+        public static string Locked => T("Купите пред.", "Buy prev.");
         public static string Owned => T("куплено", "owned");
         public static string Continue => T("Далее", "Continue");
         public static string VictoryTitle => T("Победа!", "Victory!");

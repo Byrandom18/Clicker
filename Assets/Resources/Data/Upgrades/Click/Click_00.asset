@@ -20,4 +20,4 @@ MonoBehaviour:
   baseCost: 15
   costMult: 1.15
   requires: {fileID: 0}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: ef8b345363e54d34e83f547ef20e4713, type: 3}
