@@ -1,3 +1,4 @@
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,12 +19,13 @@ namespace Clicker
         [SerializeField] Button rewardedButton;
         [SerializeField] TMP_Text rewardedLabel;
 
-        static readonly Color DotDone = new Color(0.35f, 0.85f, 0.4f, 1f);
-        static readonly Color DotCurrent = new Color(1f, 0.85f, 0.2f, 1f);
-        static readonly Color DotEmpty = new Color(0.25f, 0.25f, 0.28f, 1f);
-
         public Button MuteButton => muteButton;
         public Button RewardedButton => rewardedButton;
+
+        void OnDestroy()
+        {
+            KillHeartTweens();
+        }
 
         public void Refresh(EconomyService economy, CombatService combat, bool muted)
         {
@@ -44,8 +46,6 @@ namespace Clicker
             if (hpFill != null)
                 hpFill.fillAmount = combat.HpFill01;
 
-            RefreshPhaseDots(combat);
-
             if (muteIcon != null)
             {
                 Color c = muteIcon.color;
@@ -63,30 +63,71 @@ namespace Clicker
                 rewardedButton.interactable = on;
         }
 
-        void RefreshPhaseDots(CombatService combat)
+        public void SnapHearts(int completedStages)
         {
             if (phaseDots == null)
                 return;
 
-            int stage = combat.IsWon ? StagesPerEnemy : Mathf.Clamp(combat.ActiveStageIndex, 0, StagesPerEnemy - 1);
+            KillHeartTweens();
+            completedStages = Mathf.Clamp(completedStages, 0, StagesPerEnemy);
             for (int i = 0; i < phaseDots.Length; i++)
             {
-                if (phaseDots[i] == null)
+                var img = phaseDots[i];
+                if (img == null)
                     continue;
 
-                bool visible = i < StagesPerEnemy;
-                if (phaseDots[i].gameObject.activeSelf != visible)
-                    phaseDots[i].gameObject.SetActive(visible);
-                if (!visible)
-                    continue;
-
-                if (combat.IsWon || i < stage)
-                    phaseDots[i].color = DotDone;
-                else if (i == stage)
-                    phaseDots[i].color = DotCurrent;
-                else
-                    phaseDots[i].color = DotEmpty;
+                bool show = i < StagesPerEnemy && i >= completedStages;
+                ResetHeartVisual(img);
+                if (img.gameObject.activeSelf != show)
+                    img.gameObject.SetActive(show);
             }
+        }
+
+        public void PlayDestroy(int stageIndex)
+        {
+            if (phaseDots == null || stageIndex < 0 || stageIndex >= phaseDots.Length)
+                return;
+
+            var img = phaseDots[stageIndex];
+            if (img == null)
+                return;
+
+            img.DOKill();
+            ResetHeartVisual(img);
+            if (!img.gameObject.activeSelf)
+                img.gameObject.SetActive(true);
+
+            DOTween.Sequence()
+                .SetUpdate(true)
+                .SetLink(img.gameObject)
+                .Append(img.transform.DOPunchScale(new Vector3(0.25f, 0.25f, 0f), 0.12f, 4, 0.4f))
+                .Append(img.transform.DOScale(Vector3.zero, 0.18f))
+                .Join(img.DOFade(0f, 0.18f))
+                .OnComplete(() =>
+                {
+                    if (img != null)
+                        img.gameObject.SetActive(false);
+                });
+        }
+
+        void KillHeartTweens()
+        {
+            if (phaseDots == null)
+                return;
+            for (int i = 0; i < phaseDots.Length; i++)
+            {
+                if (phaseDots[i] != null)
+                    phaseDots[i].DOKill();
+            }
+        }
+
+        static void ResetHeartVisual(Image img)
+        {
+            img.DOKill();
+            img.transform.localScale = Vector3.one;
+            Color c = img.color;
+            c.a = 1f;
+            img.color = c;
         }
     }
 }

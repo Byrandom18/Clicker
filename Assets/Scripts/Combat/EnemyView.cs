@@ -1,15 +1,22 @@
+using DG.Tweening;
 using UnityEngine;
 
 namespace Clicker
 {
     public class EnemyView : MonoBehaviour
     {
+        static readonly Vector3 RestScale = Vector3.one;
+        const float PunchPeak = 1.08f;
+        const float PunchUp = 0.05f;
+        const float PunchDown = 0.08f;
+
         [SerializeField] SpriteRenderer spriteRenderer;
         [SerializeField] Transform headAnchor;
         [SerializeField] EnemyDef definition;
 
         Texture2D _placeholderTex;
         Sprite _placeholderSprite;
+        Tween _clickPunch;
 
         public EnemyDef Definition => definition;
         public Transform HeadAnchor => headAnchor != null ? headAnchor : transform;
@@ -25,6 +32,7 @@ namespace Clicker
 
         void OnDestroy()
         {
+            KillClickPunch();
             if (_placeholderSprite != null)
                 Destroy(_placeholderSprite);
             if (_placeholderTex != null)
@@ -49,6 +57,26 @@ namespace Clicker
 
             Sprite sprite = definition != null ? definition.GetSprite(stageIndex) : null;
             spriteRenderer.sprite = sprite != null ? sprite : GetPlaceholder();
+        }
+
+        public void PlayClickPunch()
+        {
+            KillClickPunch();
+            transform.localScale = RestScale;
+            _clickPunch = DOTween.Sequence()
+                .SetUpdate(true)
+                .SetLink(gameObject)
+                .Append(transform.DOScale(RestScale * PunchPeak, PunchUp))
+                .Append(transform.DOScale(RestScale, PunchDown));
+        }
+
+        public void KillClickPunch()
+        {
+            if (_clickPunch != null && _clickPunch.IsActive())
+                _clickPunch.Kill();
+            _clickPunch = null;
+            if (this != null)
+                transform.localScale = RestScale;
         }
 
         Sprite GetPlaceholder()

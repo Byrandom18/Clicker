@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using YG;
@@ -22,14 +23,21 @@ namespace Clicker
         [SerializeField] SpeechBubbleView bubble;
         [SerializeField] VictoryView victory;
 
+        [Header("Timing")]
+        [SerializeField] float idleAdSeconds = 5f;
+        [SerializeField] float phaseClearDelay = 0.55f;
+
         EconomyService _economy;
         CombatService _combat;
         InterstitialGate _ads;
         bool _booted;
         bool _blockPlay;
         bool _dirty;
+        bool _idleAdBusy;
         float _lastSave;
+        float _lastActivity;
         float _hudAcc;
+        Coroutine _interludeRoutine;
         const float AutoSaveInterval = 30f;
 
         void Awake()
@@ -66,6 +74,7 @@ namespace Clicker
             if (bubble != null)
                 bubble.ContinueClicked += HandleBubbleContinue;
             YG2.onSwitchLang += HandleLang;
+            YG2.onCloseAnyAdv += HandleAnyAdClosed;
         }
 
         void OnDisable()
@@ -75,6 +84,8 @@ namespace Clicker
             if (bubble != null)
                 bubble.ContinueClicked -= HandleBubbleContinue;
             YG2.onSwitchLang -= HandleLang;
+            YG2.onCloseAnyAdv -= HandleAnyAdClosed;
+            StopInterludeRoutine();
             _ads?.Cancel();
         }
 
@@ -89,6 +100,7 @@ namespace Clicker
         void OnDestroy()
         {
             YG2.onGetSDKData -= Boot;
+            StopInterludeRoutine();
             FlushSave();
         }
 
@@ -133,6 +145,7 @@ namespace Clicker
                 RefreshUi();
             }
 
+            MaybeIdleAd();
             MaybeSave(false);
         }
 
@@ -197,7 +210,10 @@ namespace Clicker
                     hud.MuteButton.onClick.AddListener(ToggleMute);
                 if (hud.RewardedButton != null)
                     hud.RewardedButton.onClick.AddListener(HandleRewarded);
+                hud.SnapHearts(_combat.IsWon ? 4 : _combat.CompletedStagesFor(_combat.ActiveEnemyIndex));
             }
+
+            MarkActivity();
 
             if (_combat.IsWon)
             {
@@ -233,6 +249,8 @@ namespace Clicker
             if (!_booted || !CanTick())
                 return;
 
+            MarkActivity();
+            PunchActive();
             double amount = _economy.ClickPower;
             _economy.AddIncome(amount);
             if (_combat.ApplyDamage(amount))
@@ -247,6 +265,7 @@ namespace Clicker
                 return;
             if (!_economy.TryBuy(def))
                 return;
+            MarkActivity();
             MaybeSave(true);
             RefreshUi();
         }
@@ -256,6 +275,7 @@ namespace Clicker
             if (!_booted || !CanTick())
                 return;
 
+            MarkActivity();
             YG2.RewardedAdvShow("hpBoost", () =>
             {
                 if (_combat == null || _combat.IsWon || _blockPlay)
@@ -264,6 +284,7 @@ namespace Clicker
                 double dmg = System.Math.Min(_combat.HpMax * pct, _combat.HpLeft);
                 if (dmg <= 0d)
                     return;
+                PunchActive();
                 _economy.AddIncome(dmg);
                 if (_combat.ApplyDamage(dmg))
                     BeginInterlude();
@@ -295,26 +316,46 @@ namespace Clicker
             _blockPlay = true;
             SetPlaying(false);
             YG2.GameplayStop();
-            RefreshEnemySprites(true);
+            if (slots != null)
+                slots.KillAllClickPunches();
 
             int phase = _combat.PhaseIndex;
-            if (slots != null)
+            if (hud != null)
             {
-                slots.PlaySwap(phase, () => OpenBubble(phase));
+                hud.SnapHearts(_combat.CompletedStagesFor(_combat.ActiveEnemyIndex));
+                hud.PlayDestroy(_combat.ActiveStageIndex);
             }
-            else
-            {
-                OpenBubble(phase);
-            }
+
+            StopInterludeRoutine();
+            _interludeRoutine = StartCoroutine(PhaseClearThenSwap(phase));
         }
 
-        void OpenBubble(int phase)
+        IEnumerator PhaseClearThenSwap(int phase)
         {
-            string line = dialogs != null ? dialogs.GetPhaseLine(phase) : string.Empty;
+            if (phaseClearDelay > 0f)
+                yield return new WaitForSecondsRealtime(phaseClearDelay);
+
+            if (slots != null)
+                slots.KillAllClickPunches();
+            RefreshEnemySprites(true);
+
+            if (slots != null)
+                slots.PlaySwap(phase, () => OpenBubble(phase));
+            else
+                OpenBubble(phase);
+
+            _interludeRoutine = null;
+        }
+
+        void OpenBubble(int completedPhase)
+        {
+            string line = dialogs != null ? dialogs.GetPhaseLine(completedPhase) : string.Empty;
             Transform head = null;
             if (slots != null)
             {
-                var enemy = slots.GetEnemy(phase % 3);
+                bool last = _combat != null && completedPhase >= _combat.PhaseCount - 1;
+                int speaker = last ? completedPhase % 3 : (completedPhase + 1) % 3;
+                var enemy = slots.GetEnemy(speaker);
                 if (enemy != null)
                     head = enemy.HeadAnchor;
             }
@@ -329,6 +370,7 @@ namespace Clicker
         {
             if (!_blockPlay)
                 return;
+            MarkActivity();
             if (bubble != null)
                 bubble.Hide();
 
@@ -364,8 +406,11 @@ namespace Clicker
             if (slots != null)
                 slots.SnapToPhase(_combat.PhaseIndex);
             RefreshEnemySprites(false);
+            if (hud != null)
+                hud.SnapHearts(_combat.CompletedStagesFor(_combat.ActiveEnemyIndex));
             SetPlaying(true);
             YG2.GameplayStart();
+            MarkActivity();
             RefreshUi();
         }
 
@@ -376,6 +421,8 @@ namespace Clicker
             YG2.GameplayStop();
             if (bubble != null)
                 bubble.Hide();
+            if (hud != null)
+                hud.SnapHearts(4);
             if (victory != null)
                 victory.Show(dialogs != null ? dialogs.VictoryText : Loc.VictoryBody);
             RefreshUi();
@@ -417,10 +464,59 @@ namespace Clicker
             RefreshUi();
             if (bubble != null && bubble.gameObject.activeInHierarchy && _combat != null)
             {
-                var enemy = slots != null ? slots.GetEnemy(_combat.ActiveEnemyIndex) : null;
+                int speaker = _blockPlay && !_combat.IsWon && _combat.PhaseIndex < _combat.PhaseCount - 1
+                    ? (_combat.PhaseIndex + 1) % 3
+                    : _combat.ActiveEnemyIndex;
+                var enemy = slots != null ? slots.GetEnemy(speaker) : null;
                 bubble.Show(dialogs != null ? dialogs.GetPhaseLine(_combat.PhaseIndex) : string.Empty,
                     enemy != null ? enemy.HeadAnchor : null);
             }
+        }
+
+        void MarkActivity()
+        {
+            _lastActivity = Time.unscaledTime;
+        }
+
+        void HandleAnyAdClosed()
+        {
+            _idleAdBusy = false;
+            MarkActivity();
+        }
+
+        void MaybeIdleAd()
+        {
+            if (!_booted || _idleAdBusy || !CanTick())
+                return;
+            if (idleAdSeconds <= 0f || Time.unscaledTime - _lastActivity < idleAdSeconds)
+                return;
+            if (!YG2.isTimerAdvCompleted || YG2.nowAdsShow)
+                return;
+
+            _idleAdBusy = true;
+            MarkActivity();
+            _ads.ShowThen(() =>
+            {
+                _idleAdBusy = false;
+                MarkActivity();
+            });
+        }
+
+        void PunchActive()
+        {
+            if (slots == null || _combat == null)
+                return;
+            var view = slots.GetEnemy(_combat.ActiveEnemyIndex);
+            if (view != null)
+                view.PlayClickPunch();
+        }
+
+        void StopInterludeRoutine()
+        {
+            if (_interludeRoutine == null)
+                return;
+            StopCoroutine(_interludeRoutine);
+            _interludeRoutine = null;
         }
 
         void MaybeSave(bool force)

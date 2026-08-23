@@ -99,14 +99,26 @@ namespace Clicker
             }
         }
 
+        public void KillAllClickPunches()
+        {
+            if (enemyA != null)
+                enemyA.KillClickPunch();
+            if (enemyB != null)
+                enemyB.KillClickPunch();
+            if (enemyC != null)
+                enemyC.KillClickPunch();
+        }
+
         public void SnapToPhase(int phaseIndex)
         {
+            KillAllClickPunches();
             KillTween();
             ApplyPose(phaseIndex, true);
         }
 
         public void PlaySwap(int fromPhaseIndex, Action onComplete)
         {
+            KillAllClickPunches();
             KillTween();
             int toPhase = fromPhaseIndex + 1;
             ApplyPose(fromPhaseIndex, false);

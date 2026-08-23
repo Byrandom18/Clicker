@@ -16,6 +16,21 @@ namespace Clicker
         public int ActiveStageIndex => PhaseIndex / 3;
         public int PhaseCount => _balance != null && _balance.phaseCount > 0 ? _balance.phaseCount : BalanceDefaults.PhaseCount;
 
+        public int CompletedStagesFor(int enemyIndex)
+        {
+            if (IsWon)
+                return 4;
+            int n = 0;
+            int phase = PhaseIndex;
+            for (int p = 0; p < phase; p++)
+            {
+                if (p % 3 == enemyIndex)
+                    n++;
+            }
+
+            return Mathf.Clamp(n, 0, 4);
+        }
+
         public CombatService(BalanceConfig balance)
         {
             _balance = balance;
