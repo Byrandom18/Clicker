@@ -13,12 +13,12 @@
         false,
         false
     ],
-    "idSave": 211,
+    "idSave": 223,
     "clickerInitialized": true,
     "clickerSaveVersion": 2,
-    "score": 312522.75727209667,
+    "score": 535004.3661094374,
     "phaseIndex": 8,
-    "hpLeft": 313436.6932149683,
+    "hpLeft": 90743.77187762759,
     "pendingOverflow": 0.0,
     "muted": false,
     "gameWon": false,
@@ -29,11 +29,11 @@
         },
         {
             "id": "idle_00_tick",
-            "count": 1
+            "count": 3
         },
         {
             "id": "click_01_combo",
-            "count": 1
+            "count": 2
         },
         {
             "id": "idle_01_flow",
