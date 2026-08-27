@@ -1,10 +1,11 @@
 fileFormatVersion: 2
-guid: 4c001dffa08fac749af886f3adda3454
+guid: 2db0fc38cd0ca5f44ba0630422749803
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 57586685852309825
-    second: edited-photo (0)_0
+      213: -5286533168916965130
+    second: "Adobe Express Photo project - 28 \u0430\u0432\u0433\u0443\u0441\u0442\u0430
+      2026 \u0433. \u0432 01.00.57_0"
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -152,13 +153,14 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: edited-photo (0)_0
+      name: "Adobe Express Photo project - 28 \u0430\u0432\u0433\u0443\u0441\u0442\u0430
+        2026 \u0433. \u0432 01.00.57_0"
       rect:
         serializedVersion: 2
-        x: 59
-        y: 20
-        width: 892
-        height: 1486
+        x: 94
+        y: 31
+        width: 793
+        height: 1484
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -167,8 +169,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 149d40229c69cc000800000000000000
-      internalID: 57586685852309825
+      spriteID: 6f85265971672a6b0800000000000000
+      internalID: -5286533168916965130
       vertices: []
       indices: 
       edges: []
@@ -187,7 +189,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      edited-photo (0)_0: 57586685852309825
+      "Adobe Express Photo project - 28 \u0430\u0432\u0433\u0443\u0441\u0442\u0430 2026 \u0433. \u0432 01.00.57_0": -5286533168916965130
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

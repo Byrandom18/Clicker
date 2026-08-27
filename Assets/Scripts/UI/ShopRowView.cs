@@ -29,6 +29,13 @@ namespace Clicker
         {
             if (buy != null)
                 buy.onClick.AddListener(HandleBuy);
+            if (power != null)
+            {
+                power.enableAutoSizing = true;
+                power.fontSizeMin = 14f;
+                power.fontSizeMax = 22f;
+                power.textWrappingMode = TextWrappingModes.Normal;
+            }
         }
 
         void OnDestroy()

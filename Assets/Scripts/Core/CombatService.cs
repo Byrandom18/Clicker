@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using YG;
 
@@ -5,21 +6,26 @@ namespace Clicker
 {
     public sealed class CombatService
     {
+        public const int CampaignSpriteMax = 4;
+        public const int EndlessSpriteMax = 5;
+        public const int CampaignStagesPerEnemy = 4;
+
         readonly BalanceConfig _balance;
 
         public int PhaseIndex => YG2.saves.phaseIndex;
-        public bool IsWon => YG2.saves.gameWon;
+        public bool IsEndless => YG2.saves.endlessMode;
+        public bool IsWon => YG2.saves.gameWon && !YG2.saves.endlessMode;
         public bool HasPendingInterlude { get; private set; }
         public double HpLeft => YG2.saves.hpLeft;
-        public double HpMax => _balance != null ? _balance.GetPhaseHp(PhaseIndex) : 1d;
+        public double HpMax => GetPhaseHp(IsWon ? PhaseCount - 1 : PhaseIndex);
         public int ActiveEnemyIndex => PhaseIndex % 3;
-        public int ActiveStageIndex => PhaseIndex / 3;
+        public int ActiveStageIndex => Mathf.Clamp(PhaseIndex / 3, 0, CampaignStagesPerEnemy - 1);
         public int PhaseCount => _balance != null && _balance.phaseCount > 0 ? _balance.phaseCount : BalanceDefaults.PhaseCount;
 
         public int CompletedStagesFor(int enemyIndex)
         {
-            if (IsWon)
-                return 4;
+            if (IsWon || IsEndless)
+                return CampaignStagesPerEnemy;
             int n = 0;
             int phase = PhaseIndex;
             for (int p = 0; p < phase; p++)
@@ -28,7 +34,7 @@ namespace Clicker
                     n++;
             }
 
-            return Mathf.Clamp(n, 0, 4);
+            return Mathf.Clamp(n, 0, CampaignStagesPerEnemy);
         }
 
         public CombatService(BalanceConfig balance)
@@ -38,10 +44,22 @@ namespace Clicker
 
         public void InitFromSave()
         {
-            int count = PhaseCount;
             if (YG2.saves.phaseIndex < 0)
                 YG2.saves.phaseIndex = 0;
-            if (YG2.saves.phaseIndex >= count)
+
+            if (YG2.saves.endlessMode)
+            {
+                YG2.saves.gameWon = true;
+                if (YG2.saves.phaseIndex < PhaseCount)
+                    YG2.saves.phaseIndex = PhaseCount;
+                if (!YG2.saves.clickerInitialized || YG2.saves.hpLeft < 0d)
+                    YG2.saves.hpLeft = GetPhaseHp(YG2.saves.phaseIndex);
+                YG2.saves.clickerInitialized = true;
+                HasPendingInterlude = false;
+                return;
+            }
+
+            if (YG2.saves.phaseIndex >= PhaseCount)
             {
                 YG2.saves.gameWon = true;
                 YG2.saves.hpLeft = 0d;
@@ -57,7 +75,19 @@ namespace Clicker
             HasPendingInterlude = false;
         }
 
-        public double GetPhaseHp(int phase) => _balance != null ? _balance.GetPhaseHp(phase) : 170d;
+        public double GetPhaseHp(int phase)
+        {
+            int count = PhaseCount;
+            if (_balance == null)
+                return 170d;
+            if (phase < count)
+                return _balance.GetPhaseHp(phase);
+
+            double last = _balance.GetPhaseHp(count - 1);
+            double mult = _balance.endlessHpMult > 1d ? _balance.endlessHpMult : BalanceDefaults.EndlessHpMult;
+            int extra = phase - (count - 1);
+            return last * Math.Pow(mult, extra);
+        }
 
         public float HpFill01
         {
@@ -72,6 +102,10 @@ namespace Clicker
 
         public int GetSpriteIndex(int enemyIndex, bool afterCurrentKill)
         {
+            int max = IsEndless ? EndlessSpriteMax : CampaignSpriteMax;
+            if (!IsEndless && PhaseIndex >= PhaseCount)
+                return CampaignSpriteMax;
+
             int stage;
             if (enemyIndex == ActiveEnemyIndex)
             {
@@ -91,7 +125,7 @@ namespace Clicker
                 stage = completed;
             }
 
-            return Mathf.Clamp(stage, 0, 3);
+            return Mathf.Clamp(stage, 0, max);
         }
 
         public bool ApplyDamage(double amount)
@@ -116,14 +150,28 @@ namespace Clicker
                 return;
 
             YG2.saves.phaseIndex++;
-            if (YG2.saves.phaseIndex >= PhaseCount)
+            if (YG2.saves.phaseIndex >= PhaseCount && !YG2.saves.endlessMode)
             {
                 YG2.saves.gameWon = true;
                 YG2.saves.hpLeft = 0d;
-                YG2.saves.pendingOverflow = 0d;
                 return;
             }
 
+            ApplyHpForCurrentPhase();
+        }
+
+        public void StartEndless()
+        {
+            YG2.saves.endlessMode = true;
+            YG2.saves.gameWon = true;
+            HasPendingInterlude = false;
+            if (YG2.saves.phaseIndex < PhaseCount)
+                YG2.saves.phaseIndex = PhaseCount;
+            ApplyHpForCurrentPhase();
+        }
+
+        void ApplyHpForCurrentPhase()
+        {
             double hp = GetPhaseHp(YG2.saves.phaseIndex);
             double overflow = YG2.saves.pendingOverflow;
             YG2.saves.pendingOverflow = 0d;

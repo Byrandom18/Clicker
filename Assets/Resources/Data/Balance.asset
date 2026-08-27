@@ -16,6 +16,7 @@ MonoBehaviour:
   baseClickPower: 1
   simulatedClicksPerSecond: 3
   tweenDuration: 0.6
+  endlessHpMult: 1.15
   phaseHp:
   - 170
   - 2100

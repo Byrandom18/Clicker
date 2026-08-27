@@ -73,6 +73,8 @@ namespace Clicker
             ShopRowView.BuyClicked += HandleBuy;
             if (bubble != null)
                 bubble.ContinueClicked += HandleBubbleContinue;
+            if (victory != null)
+                victory.ContinueClicked += HandleVictoryContinue;
             YG2.onSwitchLang += HandleLang;
             YG2.onCloseAnyAdv += HandleAnyAdClosed;
         }
@@ -83,6 +85,8 @@ namespace Clicker
             ShopRowView.BuyClicked -= HandleBuy;
             if (bubble != null)
                 bubble.ContinueClicked -= HandleBubbleContinue;
+            if (victory != null)
+                victory.ContinueClicked -= HandleVictoryContinue;
             YG2.onSwitchLang -= HandleLang;
             YG2.onCloseAnyAdv -= HandleAnyAdClosed;
             StopInterludeRoutine();
@@ -210,7 +214,9 @@ namespace Clicker
                     hud.MuteButton.onClick.AddListener(ToggleMute);
                 if (hud.RewardedButton != null)
                     hud.RewardedButton.onClick.AddListener(HandleRewarded);
-                hud.SnapHearts(_combat.IsWon ? 4 : _combat.CompletedStagesFor(_combat.ActiveEnemyIndex));
+                hud.SnapHearts(_combat.IsWon || _combat.IsEndless
+                    ? CombatService.CampaignStagesPerEnemy
+                    : _combat.CompletedStagesFor(_combat.ActiveEnemyIndex));
             }
 
             MarkActivity();
@@ -320,7 +326,7 @@ namespace Clicker
                 slots.KillAllClickPunches();
 
             int phase = _combat.PhaseIndex;
-            if (hud != null)
+            if (hud != null && !_combat.IsEndless)
             {
                 hud.SnapHearts(_combat.CompletedStagesFor(_combat.ActiveEnemyIndex));
                 hud.PlayDestroy(_combat.ActiveStageIndex);
@@ -353,8 +359,8 @@ namespace Clicker
             Transform head = null;
             if (slots != null)
             {
-                bool last = _combat != null && completedPhase >= _combat.PhaseCount - 1;
-                int speaker = last ? completedPhase % 3 : (completedPhase + 1) % 3;
+                bool lastCampaign = _combat != null && !_combat.IsEndless && completedPhase >= _combat.PhaseCount - 1;
+                int speaker = lastCampaign ? completedPhase % 3 : (completedPhase + 1) % 3;
                 var enemy = slots.GetEnemy(speaker);
                 if (enemy != null)
                     head = enemy.HeadAnchor;
@@ -374,8 +380,8 @@ namespace Clicker
             if (bubble != null)
                 bubble.Hide();
 
-            bool lastPhase = _combat.PhaseIndex >= _combat.PhaseCount - 1;
-            if (lastPhase)
+            bool lastCampaign = !_combat.IsEndless && _combat.PhaseIndex >= _combat.PhaseCount - 1;
+            if (lastCampaign)
             {
                 FinishInterlude();
                 return;
@@ -422,9 +428,42 @@ namespace Clicker
             if (bubble != null)
                 bubble.Hide();
             if (hud != null)
-                hud.SnapHearts(4);
+                hud.SnapHearts(CombatService.CampaignStagesPerEnemy);
+            RefreshEnemySprites(false);
             if (victory != null)
                 victory.Show(dialogs != null ? dialogs.VictoryText : Loc.VictoryBody);
+            RefreshUi();
+            MaybeSave(true);
+        }
+
+        void HandleVictoryContinue()
+        {
+            if (!_booted || _combat == null || !_combat.IsWon)
+                return;
+
+            _combat.StartEndless();
+            if (victory != null)
+                victory.Hide();
+            if (bubble != null)
+                bubble.Hide();
+
+            if (_combat.HasPendingInterlude)
+            {
+                _blockPlay = false;
+                BeginInterlude();
+                MaybeSave(true);
+                return;
+            }
+
+            _blockPlay = false;
+            if (slots != null)
+                slots.SnapToPhase(_combat.PhaseIndex);
+            RefreshEnemySprites(false);
+            if (hud != null)
+                hud.SnapHearts(_combat.CompletedStagesFor(_combat.ActiveEnemyIndex));
+            SetPlaying(true);
+            YG2.GameplayStart();
+            MarkActivity();
             RefreshUi();
             MaybeSave(true);
         }
@@ -462,11 +501,13 @@ namespace Clicker
         void HandleLang(string _)
         {
             RefreshUi();
+            if (victory != null && victory.gameObject.activeInHierarchy && _combat != null && _combat.IsWon)
+                victory.Show(dialogs != null ? dialogs.VictoryText : Loc.VictoryBody);
             if (bubble != null && bubble.gameObject.activeInHierarchy && _combat != null)
             {
-                int speaker = _blockPlay && !_combat.IsWon && _combat.PhaseIndex < _combat.PhaseCount - 1
-                    ? (_combat.PhaseIndex + 1) % 3
-                    : _combat.ActiveEnemyIndex;
+                bool useNext = _blockPlay && !_combat.IsWon
+                               && (_combat.IsEndless || _combat.PhaseIndex < _combat.PhaseCount - 1);
+                int speaker = useNext ? (_combat.PhaseIndex + 1) % 3 : _combat.ActiveEnemyIndex;
                 var enemy = slots != null ? slots.GetEnemy(speaker) : null;
                 bubble.Show(dialogs != null ? dialogs.GetPhaseLine(_combat.PhaseIndex) : string.Empty,
                     enemy != null ? enemy.HeadAnchor : null);

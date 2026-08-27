@@ -39,16 +39,20 @@ namespace Clicker
         public static string Locked => T("Купите пред.", "Buy prev.");
         public static string Owned => T("куплено", "owned");
         public static string Continue => T("Далее", "Continue");
+        public static string ContinueEndless => T("Продолжить", "Continue");
         public static string VictoryTitle => T("Победа!", "Victory!");
         public static string VictoryBody => T(
             "Все противники пали. Вы прошли игру!",
             "All opponents have fallen. You finished the game!");
         public static string MegaAttack => T("МЕГА-АТАКА ЗА РЕКЛАМУ", "MEGA ATTACK FOR AN AD");
+        public static string UpgradeClickPower => T("Сила клика", "Click power");
+        public static string UpgradeIdlePower => T("Автоматически", "Automatically");
 
         public static string PlusPower(double power, bool idle)
         {
             string value = NumberFormatter.Format(power);
-            return idle ? $"+{value}{PerSecond}" : $"+{value}";
+            string label = idle ? UpgradeIdlePower : UpgradeClickPower;
+            return idle ? $"{label} +{value}{PerSecond}" : $"{label} +{value}";
         }
     }
 }

@@ -20,6 +20,7 @@ namespace YG
         public double pendingOverflow;
         public bool muted;
         public bool gameWon;
+        public bool endlessMode;
         public List<UpgradeSave> upgrades = new List<UpgradeSave>();
     }
 }

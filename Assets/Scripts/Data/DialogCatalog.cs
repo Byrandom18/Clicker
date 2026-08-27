@@ -22,7 +22,9 @@ namespace Clicker
         {
             if (phaseLines == null || phaseLines.Length == 0)
                 return string.Empty;
-            int i = Mathf.Clamp(phaseIndex, 0, phaseLines.Length - 1);
+            int i = phaseIndex % phaseLines.Length;
+            if (i < 0)
+                i += phaseLines.Length;
             return phaseLines[i] != null ? phaseLines[i].Text : string.Empty;
         }
 

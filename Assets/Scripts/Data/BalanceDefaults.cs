@@ -6,6 +6,7 @@ namespace Clicker
     {
         public const int PhaseCount = 12;
         public const int UpgradeCount = 12;
+        public const double EndlessHpMult = 1.15d;
 
         public static readonly double[] PhaseHp =
         {
@@ -35,6 +36,7 @@ namespace Clicker
             config.baseClickPower = 1d;
             config.simulatedClicksPerSecond = 3d;
             config.tweenDuration = 0.6f;
+            config.endlessHpMult = EndlessHpMult;
             config.phaseHp = (double[])PhaseHp.Clone();
             config.targetPhaseSeconds = (double[])TargetPhaseSeconds.Clone();
             config.rewardedPercentByPhase = (float[])RewardedPercent.Clone();

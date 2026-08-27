@@ -9,6 +9,7 @@ namespace Clicker
         public double baseClickPower = 1d;
         public double simulatedClicksPerSecond = 3d;
         public float tweenDuration = 0.6f;
+        public double endlessHpMult = 1.15d;
         public double[] phaseHp;
         public double[] targetPhaseSeconds;
         public float[] rewardedPercentByPhase;

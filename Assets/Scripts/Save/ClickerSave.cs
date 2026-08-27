@@ -6,8 +6,9 @@ namespace Clicker
     public static class ClickerSave
     {
         public const int SchemaVersion = 2;
-        const double MaxLegitScore = 20000000d;
-        const double MaxLegitHp = 10000000d;
+        const int MaxPhaseIndex = 100000;
+        const double MaxLegitScore = 1e18;
+        const double MaxLegitHp = 1e18;
 
         public static bool Sanitize()
         {
@@ -31,6 +32,7 @@ namespace Clicker
             s.hpLeft = -1d;
             s.pendingOverflow = 0d;
             s.gameWon = false;
+            s.endlessMode = false;
             s.upgrades = new List<UpgradeSave>();
         }
 
@@ -42,7 +44,7 @@ namespace Clicker
                 return true;
             if (s.score > MaxLegitScore)
                 return true;
-            if (s.phaseIndex < 0 || s.phaseIndex > 12)
+            if (s.phaseIndex < 0 || s.phaseIndex > MaxPhaseIndex)
                 return true;
             if (double.IsNaN(s.hpLeft) || double.IsInfinity(s.hpLeft) || s.hpLeft > MaxLegitHp)
                 return true;

@@ -13,7 +13,13 @@ MonoBehaviour:
   m_Name: EnemyB
   m_EditorClassIdentifier: 
   id: enemy_b
-  nameRu: "\u041B\u0430\u0437\u0443\u0440\u043D\u044B\u0439"
+  nameRu: "\u041B\u0430\u0437\u0443\u0440\u043D\u0430\u044F"
   nameEn: Azure
   placeholderColor: {r: 0.25, g: 0.45, b: 0.9, a: 1}
-  stageSprites: []
+  stageSprites:
+  - {fileID: 21300000, guid: 4c001dffa08fac749af886f3adda3454, type: 3}
+  - {fileID: 21300000, guid: 9b32c1a5175fc494bbf9a6651f64bc1b, type: 3}
+  - {fileID: 21300000, guid: 0a030852a2e486940886cfff709210ba, type: 3}
+  - {fileID: 21300000, guid: dfc8f0ed2b608c6409766bfcf4a3b290, type: 3}
+  - {fileID: 21300000, guid: 30e7dcf04dc329d4d894631c41a23f91, type: 3}
+  - {fileID: 21300000, guid: b0b1868ef62945c47bc283d5fde26f79, type: 3}
