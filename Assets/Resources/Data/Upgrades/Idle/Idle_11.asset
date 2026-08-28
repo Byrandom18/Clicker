@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 1
   nameRu: "\u0413\u0435\u043D\u0435\u0437\u0438\u0441"
   nameEn: Genesis
-  powerPerCopy: 4.8
-  baseCost: 29000
+  powerPerCopy: 555
+  baseCost: 100000000
   costMult: 1.15
   requires: {fileID: 11400000, guid: a1ed2486fa06d5544a8e6570fca069e2, type: 2}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 2aed0dd76ed63e044bfbceec9ca69d26, type: 3}

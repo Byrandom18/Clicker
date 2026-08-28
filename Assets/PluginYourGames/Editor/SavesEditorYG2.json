@@ -1,13 +1,27 @@
 {
-  "idSave": 1,
-  "clickerInitialized": false,
-  "clickerSaveVersion": 2,
-  "score": 0.0,
-  "phaseIndex": 0,
-  "hpLeft": -1.0,
-  "pendingOverflow": 0.0,
-  "muted": false,
-  "gameWon": false,
-  "endlessMode": false,
-  "upgrades": []
+    "stringKeys": [],
+    "stringValues": [],
+    "floatKeys": [],
+    "floatValues": [],
+    "intKeys": [],
+    "intValues": [],
+    "intExample": 5,
+    "strExample": "Hello!",
+    "boolExample": [
+        false,
+        false,
+        false,
+        false
+    ],
+    "idSave": 4,
+    "clickerInitialized": true,
+    "clickerSaveVersion": 2,
+    "score": 0.0,
+    "phaseIndex": 0,
+    "hpLeft": 170.0,
+    "pendingOverflow": 0.0,
+    "muted": false,
+    "gameWon": false,
+    "endlessMode": false,
+    "upgrades": []
 }

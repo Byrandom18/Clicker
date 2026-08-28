@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 1
   nameRu: "\u0424\u0430\u0431\u0440\u0438\u043A\u0430"
   nameEn: Factory
-  powerPerCopy: 1.6
-  baseCost: 1200
+  powerPerCopy: 12
+  baseCost: 1000
   costMult: 1.15
   requires: {fileID: 11400000, guid: 07959aac98988d14ab226d7e2ef68833, type: 2}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 4376b083c49065f44af380eb52297416, type: 3}

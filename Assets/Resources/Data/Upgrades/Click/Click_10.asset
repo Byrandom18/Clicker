@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 0
   nameRu: "\u041E\u043C\u0435\u0433\u0430"
   nameEn: Omega
-  powerPerCopy: 11
-  baseCost: 13600
+  powerPerCopy: 233
+  baseCost: 10000000
   costMult: 1.15
   requires: {fileID: 11400000, guid: fdabb2734e67c104480687006933a41b, type: 2}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 971053f9289778d41b94f83bddb5dfe6, type: 3}

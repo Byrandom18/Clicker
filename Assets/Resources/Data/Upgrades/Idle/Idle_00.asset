@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 1
   nameRu: "\u0422\u0438\u043A"
   nameEn: Tick
-  powerPerCopy: 0.4
-  baseCost: 25
+  powerPerCopy: 2
+  baseCost: 20
   costMult: 1.15
   requires: {fileID: 0}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 8efa33b891ff0d64d8060c361b4ee725, type: 3}

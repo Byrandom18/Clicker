@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 0
   nameRu: "\u0422\u044F\u0436\u0451\u043B\u044B\u0439"
   nameEn: Heavy
-  powerPerCopy: 3
-  baseCost: 310
+  powerPerCopy: 5
+  baseCost: 150
   costMult: 1.15
   requires: {fileID: 11400000, guid: d17ca09bf37c8384098a78d93c7a17e0, type: 2}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: d3246162217cf9649bb6d20cc8ad78b2, type: 3}

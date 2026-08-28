@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 1
   nameRu: "\u041E\u0440\u0431\u0438\u0442\u0430"
   nameEn: Orbit
-  powerPerCopy: 3.6
-  baseCost: 12800
+  powerPerCopy: 131
+  baseCost: 1000000
   costMult: 1.15
   requires: {fileID: 11400000, guid: 3a4b9aff36724cc418b275eab7372820, type: 2}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 370dd64b6035f424f9b2e2797e819ad4, type: 3}

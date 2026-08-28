@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 0
   nameRu: "\u0422\u0440\u0430\u043D\u0441\u0446\u0435\u043D\u0434\u0435\u043D\u0446\u0438\u044F"
   nameEn: Transcend
-  powerPerCopy: 12
-  baseCost: 17000
+  powerPerCopy: 377
+  baseCost: 50000000
   costMult: 1.15
   requires: {fileID: 11400000, guid: 6c4b209fab03ec848a51e857c99443c9, type: 2}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: c080300f283d3fc43a008dfddc6d1e2f, type: 3}

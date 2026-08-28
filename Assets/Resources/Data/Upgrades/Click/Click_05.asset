@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 0
   nameRu: "\u041D\u043E\u0432\u0430"
   nameEn: Nova
-  powerPerCopy: 6
-  baseCost: 2390
+  powerPerCopy: 21
+  baseCost: 10000
   costMult: 1.15
   requires: {fileID: 11400000, guid: 313774d7d34090a41b25e3da1c549316, type: 2}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: ab237a254c1cc344aa79bba1f4e30ba2, type: 3}

@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 0
   nameRu: "\u041F\u0435\u0440\u0435\u0433\u0440\u0443\u0437\u043A\u0430"
   nameEn: Overload
-  powerPerCopy: 7
-  baseCost: 3640
+  powerPerCopy: 34
+  baseCost: 50000
   costMult: 1.15
   requires: {fileID: 11400000, guid: 6181461b19ab24840ab974a7cd77f343, type: 2}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 6105469236689b24c9b349dd311da619, type: 3}

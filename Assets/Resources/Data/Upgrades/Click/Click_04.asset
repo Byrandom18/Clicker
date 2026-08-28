@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 0
   nameRu: "\u0428\u0442\u043E\u0440\u043C"
   nameEn: Storm
-  powerPerCopy: 5
-  baseCost: 1420
+  powerPerCopy: 13
+  baseCost: 2500
   costMult: 1.15
   requires: {fileID: 11400000, guid: b3e9228b623d40447bb1e26e18b5e6b0, type: 2}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 38b424662936ef14f8fc9dabb403ea27, type: 3}

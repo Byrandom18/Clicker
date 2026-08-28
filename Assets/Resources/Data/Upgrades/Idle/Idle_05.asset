@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 1
   nameRu: "\u042F\u0434\u0440\u043E"
   nameEn: Core
-  powerPerCopy: 2.4
-  baseCost: 4000
+  powerPerCopy: 31
+  baseCost: 20000
   costMult: 1.15
   requires: {fileID: 11400000, guid: f6c689b3334470346ba9eaed65a5702f, type: 2}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: d5fc9c65c0973ab4baae1317a84ba2e7, type: 3}

@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 1
   nameRu: "\u0414\u0438\u043D\u0430\u043C\u043E"
   nameEn: Dynamo
-  powerPerCopy: 3.2
-  baseCost: 9000
+  powerPerCopy: 81
+  baseCost: 300000
   costMult: 1.15
   requires: {fileID: 11400000, guid: 90aef6cf8726cb34eaa5308eafeeac94, type: 2}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 307cb6fc4ce2002428dda29c8532ebc2, type: 3}

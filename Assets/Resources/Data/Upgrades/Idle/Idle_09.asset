@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 1
   nameRu: "\u041F\u0443\u043B\u044C\u0441\u0430\u0440"
   nameEn: Pulsar
-  powerPerCopy: 4
-  baseCost: 17500
+  powerPerCopy: 212
+  baseCost: 5000000
   costMult: 1.15
   requires: {fileID: 11400000, guid: 2f624be4e14a4e140815f8eeae1b6072, type: 2}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 354815609d146fb48ba7d9363aefb951, type: 3}

@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 0
   nameRu: "\u0421\u0438\u043D\u0433\u0443\u043B\u044F\u0440\u043D\u043E\u0441\u0442\u044C"
   nameEn: Singularity
-  powerPerCopy: 10
-  baseCost: 10300
+  powerPerCopy: 144
+  baseCost: 2500000
   costMult: 1.15
   requires: {fileID: 11400000, guid: 4fc4a3cb1e3076d42b2a02deb1613512, type: 2}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: eba1646c57953ff42a9d308eead21885, type: 3}

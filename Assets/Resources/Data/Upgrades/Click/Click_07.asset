@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 0
   nameRu: "\u041B\u043E\u043C\u0430\u0442\u0435\u043B\u044C"
   nameEn: Breaker
-  powerPerCopy: 8
-  baseCost: 5300
+  powerPerCopy: 55
+  baseCost: 150000
   costMult: 1.15
   requires: {fileID: 11400000, guid: cb8fb22ff81938348953f1f41b9e1c06, type: 2}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: a6e9655dfb3ad8c4494c5999cd5bcca0, type: 3}

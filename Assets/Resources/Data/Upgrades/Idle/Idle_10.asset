@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 1
   nameRu: "\u041A\u0432\u0430\u0437\u0430\u0440"
   nameEn: Quasar
-  powerPerCopy: 4.4
-  baseCost: 23000
+  powerPerCopy: 343
+  baseCost: 20000000
   costMult: 1.15
   requires: {fileID: 11400000, guid: 81fd3f31ccf276744a6c3943d2fa8549, type: 2}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: decf58eb03170ae438e55f0f92c22176, type: 3}

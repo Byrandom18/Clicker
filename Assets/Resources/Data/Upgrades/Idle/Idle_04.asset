@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 1
   nameRu: "\u041C\u043E\u0442\u043E\u0440"
   nameEn: Engine
-  powerPerCopy: 2
-  baseCost: 2400
+  powerPerCopy: 19
+  baseCost: 5000
   costMult: 1.15
   requires: {fileID: 11400000, guid: 2fe11aa747f462944a46e00572a49c85, type: 2}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: cb41e8f4d829d6e4ab90def104e3ccda, type: 3}

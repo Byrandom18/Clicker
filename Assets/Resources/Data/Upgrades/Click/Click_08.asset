@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 0
   nameRu: "\u041A\u0430\u0442\u0430\u043A\u043B\u0438\u0437\u043C"
   nameEn: Cataclysm
-  powerPerCopy: 9
-  baseCost: 7520
+  powerPerCopy: 89
+  baseCost: 500000
   costMult: 1.15
   requires: {fileID: 11400000, guid: 515d28a11222a534c9e26ca6cbcda87d, type: 2}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 6ec2b92aab630c44a9f6e2168fb346b0, type: 3}

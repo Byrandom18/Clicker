@@ -16,8 +16,8 @@ MonoBehaviour:
   kind: 0
   nameRu: "\u0417\u0430\u043B\u043F"
   nameEn: Burst
-  powerPerCopy: 4
-  baseCost: 720
+  powerPerCopy: 8
+  baseCost: 500
   costMult: 1.15
   requires: {fileID: 11400000, guid: 487487438399f124b96e9db24ef2122a, type: 2}
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 55c662092570f10429a47e1ce316c3c1, type: 3}
