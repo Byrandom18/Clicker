@@ -8,12 +8,17 @@ namespace Clicker
         public double[] phaseSeconds;
         public double[] phaseHp;
         public double[] avgDps;
+        public double[] targetSeconds;
         public double totalSeconds;
         public string summary;
     }
 
     public static class BalanceSimulator
     {
+        const double Dt = 0.25d;
+        const double MaxSimTime = 200000d;
+        const double MinDps = 0.0001d;
+
         public static BalanceSimReport Run(BalanceConfig config, IReadOnlyList<UpgradeDef> click, IReadOnlyList<UpgradeDef> idle, double clicksPerSecond = 3d)
         {
             var report = new BalanceSimReport();
@@ -23,116 +28,169 @@ namespace Clicker
                 return report;
             }
 
-            int phases = config.phaseCount > 0 ? config.phaseCount : BalanceDefaults.PhaseCount;
+            int phases = PhaseCount(config);
             report.phaseSeconds = new double[phases];
             report.phaseHp = new double[phases];
             report.avgDps = new double[phases];
+            report.targetSeconds = new double[phases];
 
-            var clickOwned = new int[click != null ? click.Count : 0];
-            var idleOwned = new int[idle != null ? idle.Count : 0];
-            double score = 0d;
-            double time = 0d;
-            const double dt = 0.25d;
-
-            Recalc(config, click, idle, clickOwned, idleOwned, out double clickPower, out double idlePower);
+            var state = CreateState(config, click, idle);
 
             for (int phase = 0; phase < phases; phase++)
             {
                 double hp = config.GetPhaseHp(phase);
                 report.phaseHp[phase] = hp;
-                double left = hp;
-                double start = time;
-                double damageAcc = 0d;
-
-                while (left > 0d)
-                {
-                    TryBuys(config, click, idle, clickOwned, idleOwned, ref score, ref clickPower, ref idlePower, clicksPerSecond);
-                    double dps = clickPower * clicksPerSecond + idlePower;
-                    if (dps < 0.0001d)
-                        dps = 0.0001d;
-
-                    double step = dt;
-                    double gain = dps * step;
-                    score += gain;
-                    left -= gain;
-                    damageAcc += gain;
-                    time += step;
-
-                    if (time > 200000d)
-                        break;
-                }
-
-                report.phaseSeconds[phase] = time - start;
-                report.avgDps[phase] = report.phaseSeconds[phase] > 0d
-                    ? damageAcc / report.phaseSeconds[phase]
-                    : 0d;
+                report.targetSeconds[phase] = TargetSecondsForPhase(config, phase);
+                Advance(config, click, idle, state, clicksPerSecond, double.PositiveInfinity, hp, out double elapsed, out double damage);
+                report.phaseSeconds[phase] = elapsed;
+                report.avgDps[phase] = elapsed > 0d ? damage / elapsed : 0d;
             }
 
-            report.totalSeconds = time;
-            report.summary =
-                $"Total {report.totalSeconds / 60d:0.0} min. Last3: " +
-                $"{report.phaseSeconds[Math.Max(0, phases - 3)] / 60d:0.0}/" +
-                $"{report.phaseSeconds[Math.Max(0, phases - 2)] / 60d:0.0}/" +
-                $"{report.phaseSeconds[phases - 1] / 60d:0.0} min. Phase0 {report.phaseSeconds[0]:0.0}s.";
+            report.totalSeconds = state.time;
+            report.summary = FormatSummary(report);
             return report;
         }
 
         public static void FitPhaseHp(BalanceConfig config, IReadOnlyList<UpgradeDef> click, IReadOnlyList<UpgradeDef> idle, double clicksPerSecond = 3d)
         {
-            if (config == null || config.phaseHp == null || config.phaseHp.Length == 0)
+            if (config == null)
                 return;
 
-            double target = 0d;
-            if (config.targetPhaseSeconds != null)
+            int phases = PhaseCount(config);
+            EnsurePhaseHpArray(config, phases);
+
+            var state = CreateState(config, click, idle);
+
+            for (int phase = 0; phase < phases; phase++)
             {
-                for (int i = 0; i < config.targetPhaseSeconds.Length; i++)
-                    target += config.targetPhaseSeconds[i];
+                double target = TargetSecondsForPhase(config, phase);
+                if (target <= 0d)
+                {
+                    double existing = config.phaseHp[phase];
+                    if (existing <= 0d)
+                        existing = 1d;
+                    Advance(config, click, idle, state, clicksPerSecond, double.PositiveInfinity, existing, out _, out _);
+                    continue;
+                }
+
+                Advance(config, click, idle, state, clicksPerSecond, target, double.PositiveInfinity, out _, out double damage);
+                config.phaseHp[phase] = Math.Max(1d, damage);
             }
-
-            if (target <= 0d)
-                target = 7200d;
-
-            double lo = 0.05d;
-            double hi = 20d;
-            double[] original = (double[])config.phaseHp.Clone();
-
-            for (int i = 0; i < 28; i++)
-            {
-                double mid = Math.Sqrt(lo * hi);
-                ScaleHp(config, original, mid);
-                var report = Run(config, click, idle, clicksPerSecond);
-                if (report.totalSeconds > target)
-                    hi = mid;
-                else
-                    lo = mid;
-            }
-
-            ScaleHp(config, original, Math.Sqrt(lo * hi));
         }
 
-        static void ScaleHp(BalanceConfig config, double[] original, double scale)
+        static SimState CreateState(BalanceConfig config, IReadOnlyList<UpgradeDef> click, IReadOnlyList<UpgradeDef> idle)
         {
-            for (int i = 0; i < config.phaseHp.Length && i < original.Length; i++)
-                config.phaseHp[i] = Math.Max(1d, original[i] * scale);
+            var state = new SimState
+            {
+                clickOwned = new int[click != null ? click.Count : 0],
+                idleOwned = new int[idle != null ? idle.Count : 0]
+            };
+            Recalc(config, click, idle, state);
+            return state;
+        }
+
+        static void Advance(
+            BalanceConfig config,
+            IReadOnlyList<UpgradeDef> click,
+            IReadOnlyList<UpgradeDef> idle,
+            SimState state,
+            double clicksPerSecond,
+            double timeLimit,
+            double hpLimit,
+            out double elapsed,
+            out double damageDealt)
+        {
+            elapsed = 0d;
+            damageDealt = 0d;
+
+            while (elapsed + 1e-12d < timeLimit && damageDealt + 1e-12d < hpLimit)
+            {
+                TryBuys(config, click, idle, state, clicksPerSecond);
+                double dps = state.clickPower * clicksPerSecond + state.idlePower;
+                if (dps < MinDps)
+                    dps = MinDps;
+
+                double step = Dt;
+                double remainTime = timeLimit - elapsed;
+                if (step > remainTime)
+                    step = remainTime;
+
+                double gain = dps * step;
+                double remainHp = hpLimit - damageDealt;
+                if (gain > remainHp)
+                {
+                    step = remainHp / dps;
+                    gain = remainHp;
+                }
+
+                if (step <= 0d)
+                    break;
+
+                state.score += gain;
+                damageDealt += gain;
+                elapsed += step;
+                state.time += step;
+
+                if (state.time > MaxSimTime)
+                    break;
+            }
+        }
+
+        static int PhaseCount(BalanceConfig config)
+        {
+            return config != null && config.phaseCount > 0 ? config.phaseCount : BalanceDefaults.PhaseCount;
+        }
+
+        static double TargetSecondsForPhase(BalanceConfig config, int phase)
+        {
+            double t = config != null ? config.GetTargetSeconds(phase) : 0d;
+            if (t > 0d)
+                return t;
+            if (phase >= 0 && phase < BalanceDefaults.TargetPhaseSeconds.Length)
+                return BalanceDefaults.TargetPhaseSeconds[phase];
+            return 0d;
+        }
+
+        static void EnsurePhaseHpArray(BalanceConfig config, int phases)
+        {
+            if (config.phaseHp != null && config.phaseHp.Length == phases)
+                return;
+
+            var next = new double[phases];
+            if (config.phaseHp != null)
+            {
+                int n = Math.Min(next.Length, config.phaseHp.Length);
+                for (int i = 0; i < n; i++)
+                    next[i] = config.phaseHp[i];
+            }
+
+            config.phaseHp = next;
+        }
+
+        static string FormatSummary(BalanceSimReport report)
+        {
+            int phases = report.phaseSeconds.Length;
+            return
+                $"Total {report.totalSeconds / 60d:0.0} min. Last3: " +
+                $"{report.phaseSeconds[Math.Max(0, phases - 3)] / 60d:0.0}/" +
+                $"{report.phaseSeconds[Math.Max(0, phases - 2)] / 60d:0.0}/" +
+                $"{report.phaseSeconds[phases - 1] / 60d:0.0} min. Phase0 {report.phaseSeconds[0]:0.0}s.";
         }
 
         static void Recalc(
             BalanceConfig config,
             IReadOnlyList<UpgradeDef> click,
             IReadOnlyList<UpgradeDef> idle,
-            int[] clickOwned,
-            int[] idleOwned,
-            out double clickPower,
-            out double idlePower)
+            SimState state)
         {
-            clickPower = config != null ? config.baseClickPower : 1d;
-            idlePower = 0d;
+            state.clickPower = config != null ? config.baseClickPower : 1d;
+            state.idlePower = 0d;
             if (click != null)
             {
                 for (int i = 0; i < click.Count; i++)
                 {
                     if (click[i] != null)
-                        clickPower += clickOwned[i] * click[i].powerPerCopy;
+                        state.clickPower += state.clickOwned[i] * click[i].powerPerCopy;
                 }
             }
 
@@ -141,7 +199,7 @@ namespace Clicker
                 for (int i = 0; i < idle.Count; i++)
                 {
                     if (idle[i] != null)
-                        idlePower += idleOwned[i] * idle[i].powerPerCopy;
+                        state.idlePower += state.idleOwned[i] * idle[i].powerPerCopy;
                 }
             }
         }
@@ -150,11 +208,7 @@ namespace Clicker
             BalanceConfig config,
             IReadOnlyList<UpgradeDef> click,
             IReadOnlyList<UpgradeDef> idle,
-            int[] clickOwned,
-            int[] idleOwned,
-            ref double score,
-            ref double clickPower,
-            ref double idlePower,
+            SimState state,
             double clicksPerSecond)
         {
             for (int safety = 0; safety < 48; safety++)
@@ -164,19 +218,19 @@ namespace Clicker
                 double bestEff = 0d;
                 double bestCost = 0d;
 
-                Consider(click, clickOwned, true, clicksPerSecond, score, ref bestKind, ref bestIndex, ref bestEff, ref bestCost);
-                Consider(idle, idleOwned, false, clicksPerSecond, score, ref bestKind, ref bestIndex, ref bestEff, ref bestCost);
+                Consider(click, state.clickOwned, true, clicksPerSecond, state.score, ref bestKind, ref bestIndex, ref bestEff, ref bestCost);
+                Consider(idle, state.idleOwned, false, clicksPerSecond, state.score, ref bestKind, ref bestIndex, ref bestEff, ref bestCost);
 
                 if (bestKind < 0)
                     return;
 
-                score -= bestCost;
+                state.score -= bestCost;
                 if (bestKind == 0)
-                    clickOwned[bestIndex]++;
+                    state.clickOwned[bestIndex]++;
                 else
-                    idleOwned[bestIndex]++;
+                    state.idleOwned[bestIndex]++;
 
-                Recalc(config, click, idle, clickOwned, idleOwned, out clickPower, out idlePower);
+                Recalc(config, click, idle, state);
             }
         }
 
@@ -230,6 +284,16 @@ namespace Clicker
             }
 
             return true;
+        }
+
+        sealed class SimState
+        {
+            public int[] clickOwned;
+            public int[] idleOwned;
+            public double score;
+            public double clickPower;
+            public double idlePower;
+            public double time;
         }
     }
 }

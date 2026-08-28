@@ -13,15 +13,52 @@
         false,
         false
     ],
-    "idSave": 4,
+    "idSave": 122,
     "clickerInitialized": true,
     "clickerSaveVersion": 2,
-    "score": 0.0,
-    "phaseIndex": 0,
-    "hpLeft": 170.0,
+    "score": 59452.80719300202,
+    "phaseIndex": 4,
+    "hpLeft": 94948.95362234721,
     "pendingOverflow": 0.0,
     "muted": false,
     "gameWon": false,
     "endlessMode": false,
-    "upgrades": []
+    "upgrades": [
+        {
+            "id": "click_00_punch",
+            "count": 23
+        },
+        {
+            "id": "idle_00_tick",
+            "count": 19
+        },
+        {
+            "id": "click_01_combo",
+            "count": 19
+        },
+        {
+            "id": "idle_01_flow",
+            "count": 14
+        },
+        {
+            "id": "click_02_heavy",
+            "count": 13
+        },
+        {
+            "id": "idle_02_stream",
+            "count": 11
+        },
+        {
+            "id": "click_03_burst",
+            "count": 6
+        },
+        {
+            "id": "idle_03_factory",
+            "count": 6
+        },
+        {
+            "id": "click_04_storm",
+            "count": 1
+        }
+    ]
 }
