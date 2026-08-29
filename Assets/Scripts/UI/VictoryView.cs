@@ -70,6 +70,7 @@ namespace Clicker
                 return;
 
             continueButton.onClick.AddListener(HandleContinue);
+            UiButtonScaleFeedback.Ensure(continueButton);
             _wired = true;
         }
 

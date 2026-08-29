@@ -18,13 +18,39 @@ namespace Clicker
         [SerializeField] Image muteIcon;
         [SerializeField] Button rewardedButton;
         [SerializeField] TMP_Text rewardedLabel;
+        [SerializeField, Range(0f, 0.3f), Tooltip("Насколько сильно кнопка награды увеличивается при дыхании.")]
+        float rewardedBreathStrength = 0.08f;
+        [SerializeField, Range(0.1f, 4f), Tooltip("Как быстро кнопка награды дышит.")]
+        float rewardedBreathIntensity = 1.2f;
 
         public Button MuteButton => muteButton;
         public Button RewardedButton => rewardedButton;
 
+        void Awake()
+        {
+            UiButtonScaleFeedback.EnsureAll();
+            ApplyRewardBreath();
+        }
+
+        void OnValidate()
+        {
+            if (!Application.isPlaying || rewardedButton == null)
+                return;
+            var feedback = rewardedButton.GetComponent<UiButtonScaleFeedback>();
+            if (feedback != null)
+                feedback.SetBreath(true, rewardedBreathStrength, rewardedBreathIntensity);
+        }
+
         void OnDestroy()
         {
             KillHeartTweens();
+        }
+
+        void ApplyRewardBreath()
+        {
+            var feedback = UiButtonScaleFeedback.Ensure(rewardedButton);
+            if (feedback != null)
+                feedback.SetBreath(true, rewardedBreathStrength, rewardedBreathIntensity);
         }
 
         public void Refresh(EconomyService economy, CombatService combat, bool muted)

@@ -21,6 +21,11 @@ namespace Clicker
         [SerializeField] TMP_Text lockLabel;
         [SerializeField, Range(0f, 1f)] float lockOverlayAlpha = 0.78f;
 
+        static readonly Color AffordTop = new Color(0f, 1f, 188f / 255f, 1f);
+        static readonly Color AffordBottom = new Color(63f / 255f, 1f, 0f, 1f);
+        static readonly Color PoorTop = new Color(1f, 80f / 255f, 0f, 1f);
+        static readonly Color PoorBottom = new Color(1f, 0f, 54f / 255f, 1f);
+
         public UpgradeDef Definition => definition;
 
         public void SetDefinition(UpgradeDef def)
@@ -28,10 +33,25 @@ namespace Clicker
             definition = def;
         }
 
+        void FitInContent()
+        {
+            var le = GetComponent<LayoutElement>();
+            if (le == null)
+                le = gameObject.AddComponent<LayoutElement>();
+            le.minWidth = 0f;
+            le.flexibleWidth = 1f;
+            le.layoutPriority = 100;
+            if (GetComponent<RectMask2D>() == null)
+                gameObject.AddComponent<RectMask2D>();
+        }
+
         void Awake()
         {
             if (buy != null)
+            {
                 buy.onClick.AddListener(HandleBuy);
+                UiButtonScaleFeedback.Ensure(buy);
+            }
             if (power != null)
             {
                 power.enableAutoSizing = true;
@@ -40,6 +60,7 @@ namespace Clicker
                 power.textWrappingMode = TextWrappingModes.Normal;
             }
 
+            FitInContent();
             EnsureLockOverlay();
             ApplyLockOverlayColor();
             SetLocked(false);
@@ -85,11 +106,25 @@ namespace Clicker
 
             double price = economy.GetCost(definition);
             if (cost != null)
+            {
                 cost.text = NumberFormatter.Format(price);
+                ApplyCostColor(economy.Score >= price);
+            }
             if (buyLabel != null)
                 buyLabel.text = Loc.Buy;
             if (buy != null)
                 buy.interactable = unlocked && economy.CanAfford(definition);
+        }
+
+        void ApplyCostColor(bool canAfford)
+        {
+            if (cost == null)
+                return;
+            Color top = canAfford ? AffordTop : PoorTop;
+            Color bottom = canAfford ? AffordBottom : PoorBottom;
+            cost.color = Color.white;
+            cost.enableVertexGradient = true;
+            cost.colorGradient = new VertexGradient(top, top, bottom, bottom);
         }
 
         void SetLocked(bool locked)

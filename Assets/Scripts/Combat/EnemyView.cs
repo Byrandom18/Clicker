@@ -85,15 +85,21 @@ namespace Clicker
                 spriteRenderer.enabled = visible;
         }
 
-        public void PlayClickPunch()
+        public void PlayClickPunch(float peakScale)
         {
+            float peak = Mathf.Max(1f, peakScale);
             KillClickPunch();
             transform.localScale = RestScale;
             _clickPunch = DOTween.Sequence()
                 .SetUpdate(true)
                 .SetLink(gameObject)
-                .Append(transform.DOScale(RestScale * PunchPeak, PunchUp))
+                .Append(transform.DOScale(RestScale * peak, PunchUp))
                 .Append(transform.DOScale(RestScale, PunchDown));
+        }
+
+        public void PlayClickPunch()
+        {
+            PlayClickPunch(PunchPeak);
         }
 
         public void KillClickPunch()

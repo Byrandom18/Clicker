@@ -35,7 +35,7 @@ namespace Clicker
         public static string Shop => T("Улучшения", "Upgrades");
         public static string TabClick => T("Клик", "Click");
         public static string TabIdle => T("Авто", "Auto");
-        public static string Buy => T("Купить", "Buy");
+        public static string Buy => T("КУПИТЬ", "BUY");
         public static string Locked => T("Разблокируйте предыдущее", "Unlock the previous one");
         public static string Owned => T("куплено", "owned");
         public static string Continue => T("Далее", "Continue");

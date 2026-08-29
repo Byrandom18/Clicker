@@ -15,11 +15,14 @@ namespace Clicker
         [SerializeField] GameObject enemyPrefab;
         [SerializeField] float duration = 0.6f;
         [SerializeField] Ease ease = Ease.InOutQuad;
+        [SerializeField, Range(1f, 1.5f), Tooltip("Во сколько раз персонаж увеличивается при клике.")]
+        float clickPunchScale = 1.08f;
 
         static readonly Color Dim = new Color(0.55f, 0.55f, 0.55f, 1f);
         Sequence _seq;
 
         public EnemyView[] Enemies => new[] { enemyA, enemyB, enemyC };
+        public float ClickPunchScale => clickPunchScale;
 
         public void EnsureBound()
         {

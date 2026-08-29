@@ -13,20 +13,20 @@
         false,
         false
     ],
-    "idSave": 74,
+    "idSave": 518,
     "clickerInitialized": true,
     "clickerSaveVersion": 2,
-    "score": 106795.80644045328,
-    "phaseIndex": 6,
-    "hpLeft": 647057.6935595467,
+    "score": 32414429.77572906,
+    "phaseIndex": 15,
+    "hpLeft": 65585478.27271678,
     "pendingOverflow": 0.0,
     "muted": false,
-    "gameWon": false,
-    "endlessMode": false,
+    "gameWon": true,
+    "endlessMode": true,
     "upgrades": [
         {
             "id": "click_00_punch",
-            "count": 1
+            "count": 100
         },
         {
             "id": "idle_00_tick",
@@ -34,23 +34,23 @@
         },
         {
             "id": "click_01_combo",
-            "count": 1
+            "count": 11
         },
         {
             "id": "idle_01_flow",
-            "count": 1
+            "count": 5
         },
         {
             "id": "click_02_heavy",
-            "count": 1
+            "count": 3
         },
         {
             "id": "idle_02_stream",
-            "count": 1
+            "count": 3
         },
         {
             "id": "click_03_burst",
-            "count": 1
+            "count": 3
         },
         {
             "id": "idle_03_factory",
@@ -78,10 +78,38 @@
         },
         {
             "id": "idle_06_reactor",
-            "count": 1
+            "count": 2
         },
         {
             "id": "click_07_breaker",
+            "count": 2
+        },
+        {
+            "id": "idle_07_dynamo",
+            "count": 1
+        },
+        {
+            "id": "click_08_cataclysm",
+            "count": 1
+        },
+        {
+            "id": "idle_08_orbit",
+            "count": 1
+        },
+        {
+            "id": "click_09_singularity",
+            "count": 1
+        },
+        {
+            "id": "idle_09_pulsar",
+            "count": 1
+        },
+        {
+            "id": "click_10_omega",
+            "count": 1
+        },
+        {
+            "id": "idle_10_quasar",
             "count": 1
         }
     ]

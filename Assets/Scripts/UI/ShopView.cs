@@ -1,13 +1,20 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Clicker
 {
     public class ShopView : MonoBehaviour
     {
         [SerializeField] Transform shopRoot;
+        [SerializeField] float scrollEdgeClip = 10f;
 
         ShopRowView[] _rows;
+
+        void Awake()
+        {
+            EnsureViewportClip();
+        }
 
         public ShopRowView[] Rows
         {
@@ -26,6 +33,27 @@ namespace Clicker
             FillMissingDefinitions(found);
             ApplyAlternatingOrder(found);
             _rows = root.GetComponentsInChildren<ShopRowView>(true);
+            EnsureViewportClip();
+            var content = root as RectTransform;
+            if (content != null)
+                LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+        }
+
+        void EnsureViewportClip()
+        {
+            var scroll = GetComponentInChildren<ScrollRect>(true);
+            if (scroll == null)
+                return;
+            RectTransform viewport = scroll.viewport;
+            if (viewport == null)
+                return;
+
+            var mask = viewport.GetComponent<RectMask2D>();
+            if (mask == null)
+                mask = viewport.gameObject.AddComponent<RectMask2D>();
+
+            float inset = Mathf.Max(0f, scrollEdgeClip);
+            mask.padding = new Vector4(0f, inset, 0f, inset);
         }
 
         static void FillMissingDefinitions(ShopRowView[] rows)

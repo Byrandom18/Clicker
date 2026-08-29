@@ -624,7 +624,7 @@ namespace Clicker
                 return;
             var view = slots.GetEnemy(_combat.ActiveEnemyIndex);
             if (view != null)
-                view.PlayClickPunch();
+                view.PlayClickPunch(slots.ClickPunchScale);
         }
 
         void StopSwapRoutine()
