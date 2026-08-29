@@ -89,6 +89,14 @@ namespace Clicker.EditorTools
                 gameSo.FindProperty("bubble").objectReferenceValue = bubble;
             if (victory != null)
                 gameSo.FindProperty("victory").objectReferenceValue = victory;
+            var vfxProp = gameSo.FindProperty("stageChangeVfxPrefab");
+            if (vfxProp != null)
+            {
+                var vfx = AssetDatabase.LoadAssetAtPath<GameObject>(ClickerPaths.StageChangeVfx);
+                if (vfx != null)
+                    vfxProp.objectReferenceValue = vfx;
+            }
+
             gameSo.ApplyModifiedPropertiesWithoutUndo();
 
             if (slots != null)

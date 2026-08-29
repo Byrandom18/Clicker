@@ -1068,6 +1068,9 @@ MonoBehaviour:
   cost: {fileID: 2707668495828650945}
   buy: {fileID: 557044497461976689}
   buyLabel: {fileID: 8854742883737702958}
+  lockOverlay: {fileID: 0}
+  lockLabel: {fileID: 0}
+  lockOverlayAlpha: 0.98
 --- !u!114 &7691870657735778228
 MonoBehaviour:
   m_ObjectHideFlags: 0

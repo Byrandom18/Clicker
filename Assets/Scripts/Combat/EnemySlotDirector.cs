@@ -177,6 +177,8 @@ namespace Clicker
                         view.Renderer.color = center ? Color.white : Dim;
                 }
 
+                view.SetSpriteVisible(true);
+
                 if (view.Renderer != null)
                     view.Renderer.sortingOrder = center ? 10 : 5;
             }

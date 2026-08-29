@@ -6,9 +6,9 @@ namespace Clicker
 {
     public sealed class CombatService
     {
-        public const int CampaignSpriteMax = 4;
+        public const int CampaignSpriteMax = 5;
         public const int EndlessSpriteMax = 5;
-        public const int CampaignStagesPerEnemy = 4;
+        public const int CampaignStagesPerEnemy = 5;
 
         readonly BalanceConfig _balance;
 

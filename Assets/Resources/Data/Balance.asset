@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d88d3dfdc647f44d9b0a2e02c8d4918, type: 3}
   m_Name: Balance
   m_EditorClassIdentifier: 
-  phaseCount: 12
+  phaseCount: 15
   baseClickPower: 1
   simulatedClicksPerSecond: 3
   tweenDuration: 0.6
-  endlessHpMult: 1.15
+  endlessHpMult: 1.5
   phaseHp:
   - 200
   - 3153
@@ -30,6 +30,9 @@ MonoBehaviour:
   - 8126706.5
   - 10688701.75
   - 12871729
+  - 31248362.75
+  - 38198008.5
+  - 44074261.75
   targetPhaseSeconds:
   - 15
   - 30
@@ -43,6 +46,9 @@ MonoBehaviour:
   - 1200
   - 1200
   - 1200
+  - 2400
+  - 2400
+  - 2400
   rewardedPercentByPhase:
   - 0.4
   - 0.4
@@ -56,3 +62,7 @@ MonoBehaviour:
   - 0.1
   - 0.1
   - 0.1
+  - 0.05
+  - 0.05
+  - 0.05
+  - 0.03

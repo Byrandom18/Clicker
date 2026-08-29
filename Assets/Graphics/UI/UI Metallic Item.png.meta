@@ -1,10 +1,7 @@
 fileFormatVersion: 2
-guid: 1f3f818c769bd2e438a24a66cf0ca0dd
+guid: e713327eb08f5224fa89ddbeca4cf503
 TextureImporter:
-  internalIDToNameTable:
-  - first:
-      213: 1797201128194229901
-    second: edited-photo_0
+  internalIDToNameTable: []
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,12 +43,12 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 150
+  spritePixelsToUnits: 32
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -152,23 +149,45 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: edited-photo_0
+      name: UI Metallic Item_0
       rect:
         serializedVersion: 2
-        x: 71
-        y: 39
-        width: 892
-        height: 1472
+        x: 0
+        y: 0
+        width: 64
+        height: 64
       alignment: 0
       pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
+      border: {x: 6, y: 6, z: 6, w: 6}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: d86c2f377e0f0f810800000000000000
-      internalID: 1797201128194229901
+      spriteID: e21c25f35a4cf9c438a3e618d372f90c
+      internalID: 1320070009
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UI Metallic Item_1
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 0
+        width: 64
+        height: 64
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 2, y: 2, z: 2, w: 2}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: af4cdb20444ec4943af4414fa989adac
+      internalID: -2129834717
       vertices: []
       indices: 
       edges: []
@@ -177,7 +196,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: b132c9847bc4dc74fb129ea4de80d123
     internalID: 0
     vertices: []
     indices: 
@@ -187,7 +206,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      edited-photo_0: 1797201128194229901
+      UI Metallic Item_0: 1320070009
+      UI Metallic Item_1: -2129834717
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

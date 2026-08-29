@@ -22,6 +22,26 @@ namespace Clicker
         public Transform HeadAnchor => headAnchor != null ? headAnchor : transform;
         public SpriteRenderer Renderer => spriteRenderer;
 
+        public Vector3 WorldCenter
+        {
+            get
+            {
+                if (spriteRenderer != null && spriteRenderer.sprite != null)
+                    return spriteRenderer.bounds.center;
+                return transform.position + Vector3.up;
+            }
+        }
+
+        public Vector3 WorldSize
+        {
+            get
+            {
+                if (spriteRenderer != null && spriteRenderer.sprite != null)
+                    return spriteRenderer.bounds.size;
+                return new Vector3(2.2f, 3.2f, 0f);
+            }
+        }
+
         void Awake()
         {
             if (spriteRenderer == null)
@@ -57,6 +77,12 @@ namespace Clicker
 
             Sprite sprite = definition != null ? definition.GetSprite(stageIndex) : null;
             spriteRenderer.sprite = sprite != null ? sprite : GetPlaceholder();
+        }
+
+        public void SetSpriteVisible(bool visible)
+        {
+            if (spriteRenderer != null)
+                spriteRenderer.enabled = visible;
         }
 
         public void PlayClickPunch()

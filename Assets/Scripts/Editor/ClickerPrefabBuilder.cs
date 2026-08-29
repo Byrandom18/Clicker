@@ -121,6 +121,23 @@ namespace Clicker.EditorTools
             var labelLe = buyLabel.gameObject.AddComponent<LayoutElement>();
             labelLe.ignoreLayout = true;
 
+            var lockGo = CreateChild(root.transform, "LockOverlay");
+            var lockImg = lockGo.AddComponent<Image>();
+            lockImg.color = new Color(0.02f, 0.02f, 0.04f, 0.78f);
+            var lockLe = lockGo.AddComponent<LayoutElement>();
+            lockLe.ignoreLayout = true;
+            StretchFull(lockGo.GetComponent<RectTransform>());
+            lockGo.SetActive(false);
+
+            var lockLabel = CreateTmp(lockGo.transform, "LockLabel", 22, TextAlignmentOptions.Center);
+            StretchFull(lockLabel.rectTransform);
+            lockLabel.enableAutoSizing = true;
+            lockLabel.fontSizeMin = 12f;
+            lockLabel.fontSizeMax = 26f;
+            lockLabel.fontStyle = FontStyles.Bold;
+            lockLabel.textWrappingMode = TextWrappingModes.Normal;
+            lockLabel.text = "Разблокируйте предыдущее";
+
             var row = root.AddComponent<ShopRowView>();
             var so = new SerializedObject(row);
             so.FindProperty("icon").objectReferenceValue = iconImg;
@@ -130,6 +147,8 @@ namespace Clicker.EditorTools
             so.FindProperty("cost").objectReferenceValue = cost;
             so.FindProperty("buy").objectReferenceValue = buy;
             so.FindProperty("buyLabel").objectReferenceValue = buyLabel;
+            so.FindProperty("lockOverlay").objectReferenceValue = lockGo;
+            so.FindProperty("lockLabel").objectReferenceValue = lockLabel;
             so.ApplyModifiedPropertiesWithoutUndo();
 
             PrefabUtility.SaveAsPrefabAsset(root, ClickerPaths.ShopRow);

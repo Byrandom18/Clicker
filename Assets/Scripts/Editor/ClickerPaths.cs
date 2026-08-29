@@ -14,6 +14,8 @@ namespace Clicker.EditorTools
         public const string ShopRow = PrefabDir + "/ShopRow.prefab";
         public const string EnemyView = PrefabDir + "/EnemyView.prefab";
         public const string EnemyViewResources = ResourcesPrefabDir + "/EnemyView.prefab";
+        public const string StageChangeVfx =
+            "Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Misc/CFXR Magic Poof.prefab";
     }
 }
 #endif

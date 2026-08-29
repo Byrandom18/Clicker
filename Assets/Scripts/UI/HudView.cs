@@ -7,7 +7,7 @@ namespace Clicker
 {
     public class HudView : MonoBehaviour
     {
-        const int StagesPerEnemy = 4;
+        const int StagesPerEnemy = CombatService.CampaignStagesPerEnemy;
 
         [SerializeField] TMP_Text scoreText;
         [SerializeField] TMP_Text dpsText;

@@ -5,7 +5,7 @@ namespace Clicker
     [CreateAssetMenu(menuName = "Clicker/Balance", fileName = "Balance")]
     public class BalanceConfig : ScriptableObject
     {
-        public int phaseCount = 12;
+        public int phaseCount = 15;
         public double baseClickPower = 1d;
         public double simulatedClicksPerSecond = 3d;
         public float tweenDuration = 0.6f;

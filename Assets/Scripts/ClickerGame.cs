@@ -24,20 +24,37 @@ namespace Clicker
         [SerializeField] VictoryView victory;
 
         [Header("Timing")]
-        [SerializeField] float idleAdSeconds = 5f;
+        [SerializeField] float idleAdSeconds = 10f;
+        [SerializeField] float bubbleVisibleSeconds = 3f;
         [SerializeField] float phaseClearDelay = 0.55f;
+
+        [Header("Stage VFX")]
+        [SerializeField] GameObject stageChangeVfxPrefab;
+        [SerializeField] float stageCoverSeconds = 1f;
+        [SerializeField] float stageCoverPeak = 0.15f;
+        [SerializeField, Range(0.4f, 3f), Tooltip("Множитель размера облака относительно спрайта.")]
+        float stageCoverSize = 1f;
+        [SerializeField, Range(0f, 1f), Tooltip("Непрозрачность облака. 0 — полностью прозрачное, 1 — плотное.")]
+        float stageCoverOpacity = 0.82f;
+        [SerializeField, Range(0.3f, 4f), Tooltip("Множитель размера префаба Cartoon FX.")]
+        float stageVfxScale = 1f;
 
         EconomyService _economy;
         CombatService _combat;
         InterstitialGate _ads;
         bool _booted;
         bool _blockPlay;
+        bool _swapping;
         bool _dirty;
         bool _idleAdBusy;
         float _lastSave;
         float _lastActivity;
         float _hudAcc;
-        Coroutine _interludeRoutine;
+        Coroutine _swapRoutine;
+        Coroutine _bubbleRoutine;
+        GameObject _stageBurstGo;
+        GameObject _stageCoverGo;
+        int _bubbleLinePhase = -1;
         const float AutoSaveInterval = 30f;
 
         void Awake()
@@ -71,8 +88,6 @@ namespace Clicker
         {
             BattleZoneClick.Pressed += HandleClick;
             ShopRowView.BuyClicked += HandleBuy;
-            if (bubble != null)
-                bubble.ContinueClicked += HandleBubbleContinue;
             if (victory != null)
                 victory.ContinueClicked += HandleVictoryContinue;
             YG2.onSwitchLang += HandleLang;
@@ -83,13 +98,16 @@ namespace Clicker
         {
             BattleZoneClick.Pressed -= HandleClick;
             ShopRowView.BuyClicked -= HandleBuy;
-            if (bubble != null)
-                bubble.ContinueClicked -= HandleBubbleContinue;
             if (victory != null)
                 victory.ContinueClicked -= HandleVictoryContinue;
             YG2.onSwitchLang -= HandleLang;
             YG2.onCloseAnyAdv -= HandleAnyAdClosed;
-            StopInterludeRoutine();
+            StopSwapRoutine();
+            StopBubbleRoutine();
+            StopStageVfx(true);
+            _swapping = false;
+            if (slots != null)
+                slots.KillTween();
             _ads?.Cancel();
         }
 
@@ -104,7 +122,9 @@ namespace Clicker
         void OnDestroy()
         {
             YG2.onGetSDKData -= Boot;
-            StopInterludeRoutine();
+            StopSwapRoutine();
+            StopBubbleRoutine();
+            StopStageVfx(true);
             FlushSave();
         }
 
@@ -243,7 +263,6 @@ namespace Clicker
         {
             return !_blockPlay
                    && !_combat.IsWon
-                   && !_combat.HasPendingInterlude
                    && !YG2.isPauseGame
                    && YG2.isFocusWindowGame
                    && !YG2.nowAdsShow
@@ -256,7 +275,8 @@ namespace Clicker
                 return;
 
             MarkActivity();
-            PunchActive();
+            if (!_combat.HasPendingInterlude && !_swapping)
+                PunchActive();
             double amount = _economy.ClickPower;
             _economy.AddIncome(amount);
             if (_combat.ApplyDamage(amount))
@@ -278,7 +298,7 @@ namespace Clicker
 
         void HandleRewarded()
         {
-            if (!_booted || !CanTick())
+            if (!_booted || !CanTick() || _combat.HasPendingInterlude)
                 return;
 
             MarkActivity();
@@ -316,99 +336,113 @@ namespace Clicker
 
         void BeginInterlude()
         {
-            if (_blockPlay)
+            if (_blockPlay || _swapping)
                 return;
 
-            _blockPlay = true;
-            SetPlaying(false);
-            YG2.GameplayStop();
+            _swapping = true;
+            StopBubbleRoutine();
+            if (bubble != null)
+                bubble.Hide();
+
             if (slots != null)
                 slots.KillAllClickPunches();
 
-            int phase = _combat.PhaseIndex;
+            SetPlaying(false);
+
             if (hud != null && !_combat.IsEndless)
             {
                 hud.SnapHearts(_combat.CompletedStagesFor(_combat.ActiveEnemyIndex));
                 hud.PlayDestroy(_combat.ActiveStageIndex);
             }
 
-            StopInterludeRoutine();
-            _interludeRoutine = StartCoroutine(PhaseClearThenSwap(phase));
+            RefreshUi();
+
+            int phase = _combat.PhaseIndex;
+            StopSwapRoutine();
+            _swapRoutine = StartCoroutine(PhaseClearThenSwap(phase));
         }
 
         IEnumerator PhaseClearThenSwap(int phase)
         {
-            if (phaseClearDelay > 0f)
-                yield return new WaitForSecondsRealtime(phaseClearDelay);
+            var view = slots != null ? slots.GetEnemy(phase % 3) : null;
+            Vector3 pos = view != null ? view.WorldCenter : Vector3.zero;
+            Vector3 size = view != null ? view.WorldSize : new Vector3(2.2f, 3.2f, 0f);
+
+            float fadeIn = Mathf.Max(0.05f, stageCoverPeak);
+            float fadeOut = 0.25f;
+            float hold = Mathf.Max(0f, stageCoverSeconds);
+            float total = fadeIn + hold + fadeOut;
+
+            StopStageVfx(false);
+            if (stageChangeVfxPrefab != null)
+                _stageBurstGo = StageChangeVfx.SpawnBurst(
+                    stageChangeVfxPrefab, pos, StageChangeVfx.ScaleFor(size) * stageVfxScale);
+            _stageCoverGo = StageChangeVfx.SpawnCover(
+                pos, size, fadeIn, hold, fadeOut, stageCoverSize, stageCoverOpacity);
+
+            if (fadeIn > 0f)
+                yield return new WaitForSecondsRealtime(fadeIn);
+
+            if (view != null)
+                view.SetSpriteVisible(false);
+            RefreshEnemySprites(true);
+
+            if (hold > 0f)
+                yield return new WaitForSecondsRealtime(hold);
+
+            if (view != null)
+                view.SetSpriteVisible(true);
+
+            if (fadeOut > 0f)
+                yield return new WaitForSecondsRealtime(fadeOut);
+
+            float extra = phaseClearDelay - total;
+            if (extra > 0f)
+                yield return new WaitForSecondsRealtime(extra);
 
             if (slots != null)
                 slots.KillAllClickPunches();
-            RefreshEnemySprites(true);
 
             if (slots != null)
-                slots.PlaySwap(phase, () => OpenBubble(phase));
-            else
-                OpenBubble(phase);
-
-            _interludeRoutine = null;
-        }
-
-        void OpenBubble(int completedPhase)
-        {
-            string line = dialogs != null ? dialogs.GetPhaseLine(completedPhase) : string.Empty;
-            Transform head = null;
-            if (slots != null)
             {
-                bool lastCampaign = _combat != null && !_combat.IsEndless && completedPhase >= _combat.PhaseCount - 1;
-                int speaker = lastCampaign ? completedPhase % 3 : (completedPhase + 1) % 3;
-                var enemy = slots.GetEnemy(speaker);
-                if (enemy != null)
-                    head = enemy.HeadAnchor;
+                _swapRoutine = null;
+                slots.PlaySwap(phase, () => OnSwapComplete(phase));
+                yield break;
             }
 
-            if (bubble != null)
-                bubble.Show(line, head);
-            else
-                HandleBubbleContinue();
+            _swapRoutine = null;
+            OnSwapComplete(phase);
         }
 
-        void HandleBubbleContinue()
+        void OnSwapComplete(int completedPhase)
         {
-            if (!_blockPlay)
+            _swapping = false;
+            ShowAllEnemySprites();
+            if (_combat == null)
                 return;
-            MarkActivity();
-            if (bubble != null)
-                bubble.Hide();
 
-            bool lastCampaign = !_combat.IsEndless && _combat.PhaseIndex >= _combat.PhaseCount - 1;
-            if (lastCampaign)
-            {
-                FinishInterlude();
-                return;
-            }
-
-            _ads.ShowThen(FinishInterlude);
-        }
-
-        void FinishInterlude()
-        {
             _combat.AdvanceAfterInterlude();
             MaybeSave(true);
 
             if (_combat.IsWon)
             {
-                ShowVictory();
+                if (hud != null)
+                    hud.SnapHearts(CombatService.CampaignStagesPerEnemy);
+                RefreshEnemySprites(false);
+                RefreshUi();
+                ShowPhaseBubble(completedPhase, completedPhase % 3);
                 return;
             }
 
             if (_combat.HasPendingInterlude)
             {
-                _blockPlay = false;
+                if (hud != null)
+                    hud.SnapHearts(_combat.CompletedStagesFor(_combat.ActiveEnemyIndex));
+                RefreshUi();
                 BeginInterlude();
                 return;
             }
 
-            _blockPlay = false;
             if (slots != null)
                 slots.SnapToPhase(_combat.PhaseIndex);
             RefreshEnemySprites(false);
@@ -418,10 +452,51 @@ namespace Clicker
             YG2.GameplayStart();
             MarkActivity();
             RefreshUi();
+            ShowPhaseBubble(completedPhase, _combat.ActiveEnemyIndex);
+        }
+
+        void ShowPhaseBubble(int completedPhase, int speaker)
+        {
+            Transform head = null;
+            if (slots != null)
+            {
+                var enemy = slots.GetEnemy(speaker);
+                if (enemy != null)
+                    head = enemy.HeadAnchor;
+            }
+
+            _bubbleLinePhase = completedPhase;
+            if (bubble != null)
+            {
+                string line = dialogs != null ? dialogs.GetPhaseLine(completedPhase) : string.Empty;
+                bubble.Show(line, head);
+            }
+
+            StopBubbleRoutine();
+            _bubbleRoutine = StartCoroutine(BubbleThenHide());
+        }
+
+        IEnumerator BubbleThenHide()
+        {
+            float wait = bubbleVisibleSeconds > 0f ? bubbleVisibleSeconds : 3f;
+            if (wait > 0f)
+                yield return new WaitForSecondsRealtime(wait);
+            _bubbleRoutine = null;
+            HidePhaseBubble();
+        }
+
+        void HidePhaseBubble()
+        {
+            if (bubble != null)
+                bubble.Hide();
+            _bubbleLinePhase = -1;
+            if (_combat != null && _combat.IsWon)
+                ShowVictory();
         }
 
         void ShowVictory()
         {
+            StopBubbleRoutine();
             _blockPlay = true;
             SetPlaying(false);
             YG2.GameplayStop();
@@ -503,13 +578,11 @@ namespace Clicker
             RefreshUi();
             if (victory != null && victory.gameObject.activeInHierarchy && _combat != null && _combat.IsWon)
                 victory.Show(dialogs != null ? dialogs.VictoryText : Loc.VictoryBody);
-            if (bubble != null && bubble.gameObject.activeInHierarchy && _combat != null)
+            if (bubble != null && bubble.gameObject.activeInHierarchy && _combat != null && _bubbleLinePhase >= 0)
             {
-                bool useNext = _blockPlay && !_combat.IsWon
-                               && (_combat.IsEndless || _combat.PhaseIndex < _combat.PhaseCount - 1);
-                int speaker = useNext ? (_combat.PhaseIndex + 1) % 3 : _combat.ActiveEnemyIndex;
+                int speaker = _combat.IsWon ? _bubbleLinePhase % 3 : _combat.ActiveEnemyIndex;
                 var enemy = slots != null ? slots.GetEnemy(speaker) : null;
-                bubble.Show(dialogs != null ? dialogs.GetPhaseLine(_combat.PhaseIndex) : string.Empty,
+                bubble.Show(dialogs != null ? dialogs.GetPhaseLine(_bubbleLinePhase) : string.Empty,
                     enemy != null ? enemy.HeadAnchor : null);
             }
         }
@@ -527,7 +600,9 @@ namespace Clicker
 
         void MaybeIdleAd()
         {
-            if (!_booted || _idleAdBusy || !CanTick())
+            if (!_booted || _idleAdBusy || !CanTick() || _combat.HasPendingInterlude || _swapping)
+                return;
+            if (_bubbleRoutine != null)
                 return;
             if (idleAdSeconds <= 0f || Time.unscaledTime - _lastActivity < idleAdSeconds)
                 return;
@@ -552,12 +627,52 @@ namespace Clicker
                 view.PlayClickPunch();
         }
 
-        void StopInterludeRoutine()
+        void StopSwapRoutine()
         {
-            if (_interludeRoutine == null)
+            if (_swapRoutine == null)
                 return;
-            StopCoroutine(_interludeRoutine);
-            _interludeRoutine = null;
+            StopCoroutine(_swapRoutine);
+            _swapRoutine = null;
+            StopStageVfx(true);
+        }
+
+        void StopStageVfx(bool showSprites)
+        {
+            if (_stageBurstGo != null)
+            {
+                Destroy(_stageBurstGo);
+                _stageBurstGo = null;
+            }
+
+            if (_stageCoverGo != null)
+            {
+                Destroy(_stageCoverGo);
+                _stageCoverGo = null;
+            }
+
+            if (showSprites)
+                ShowAllEnemySprites();
+        }
+
+        void ShowAllEnemySprites()
+        {
+            if (slots == null)
+                return;
+            for (int i = 0; i < 3; i++)
+            {
+                var view = slots.GetEnemy(i);
+                if (view != null)
+                    view.SetSpriteVisible(true);
+            }
+        }
+
+        void StopBubbleRoutine()
+        {
+            if (_bubbleRoutine == null)
+                return;
+            StopCoroutine(_bubbleRoutine);
+            _bubbleRoutine = null;
+            _bubbleLinePhase = -1;
         }
 
         void MaybeSave(bool force)

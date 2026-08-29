@@ -4,27 +4,30 @@ namespace Clicker
 {
     public static class BalanceDefaults
     {
-        public const int PhaseCount = 12;
+        public const int PhaseCount = 15;
         public const int UpgradeCount = 12;
         public const double EndlessHpMult = 1.15d;
 
         public static readonly double[] PhaseHp =
         {
-            170d, 2100d, 9800d, 29000d, 71000d, 148000d,
-            278000d, 480000d, 790000d, 1400000d, 1800000d, 2200000d
+            200d, 3153d, 17834.5d, 50782.5d, 122338d, 235506.25d,
+            663669.25d, 1391510.25d, 2390320d, 8126706.5d, 10688701.75d, 12871729d,
+            31248362.75d, 38198008.5d, 44074261.75d
         };
 
         public static readonly double[] TargetPhaseSeconds =
         {
-            30d, 90d, 165d, 250d, 355d, 470d, 600d, 740d, 900d, 1200d, 1200d, 1200d
+            15d, 30d, 45d, 60d, 90d, 120d, 240d, 360d, 480d,
+            1200d, 1200d, 1200d, 2400d, 2400d, 2400d
         };
 
         public static readonly float[] RewardedPercent =
         {
-            0.20f, 0.20f, 0.20f,
-            0.15f, 0.15f, 0.15f,
-            0.12f, 0.12f, 0.12f,
-            0.10f, 0.10f, 0.10f
+            0.40f, 0.40f, 0.40f,
+            0.25f, 0.25f, 0.25f,
+            0.18f, 0.18f, 0.18f,
+            0.10f, 0.10f, 0.10f,
+            0.05f, 0.05f, 0.05f
         };
 
         public static void ApplyTo(BalanceConfig config)
@@ -115,7 +118,10 @@ namespace Clicker
                 Line("Держись. Дальше будет дольше.", "Hang on. It only gets longer."),
                 Line("Двадцать минут? Я подожду.", "Twenty minutes? I'll wait."),
                 Line("Предпоследний раунд. Не зевай.", "Second to last. Stay sharp."),
-                Line("Финал. Бей, пока я стою.", "Finale. Hit me while I'm standing.")
+                Line("Финал. Бей, пока я стою.", "Finale. Hit me while I'm standing."),
+                Line("Последняя форма. Это ещё не конец.", "Last form. This isn't over."),
+                Line("Дальше уже некуда. Почти.", "Nowhere left to go. Almost."),
+                Line("После этого — только бесконечность.", "After this, only endless remains.")
             };
             catalog.victory = Line(
                 "Все противники пали. Вы прошли игру!",

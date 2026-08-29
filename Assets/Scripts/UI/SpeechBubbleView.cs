@@ -1,4 +1,3 @@
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,31 +6,26 @@ namespace Clicker
 {
     public class SpeechBubbleView : MonoBehaviour
     {
-        public event Action ContinueClicked;
-
         [SerializeField] TMP_Text body;
         [SerializeField] Button continueButton;
         [SerializeField] TMP_Text continueLabel;
         [SerializeField] RectTransform rect;
         [SerializeField] RectTransform canvasRect;
         [SerializeField] Camera worldCamera;
+        [Tooltip("Смещение пузыря от головы противника в пикселях Canvas. X > 0 — справа.")]
+        [SerializeField] Vector2 followOffset = new Vector2(160f, 0f);
 
         Transform _follow;
         Canvas _canvas;
+        Graphic _graphic;
 
         void Awake()
         {
             if (rect == null)
                 rect = transform as RectTransform;
             _canvas = GetComponentInParent<Canvas>();
-            if (continueButton != null)
-                continueButton.onClick.AddListener(HandleContinue);
-        }
-
-        void OnDestroy()
-        {
-            if (continueButton != null)
-                continueButton.onClick.RemoveListener(HandleContinue);
+            _graphic = GetComponent<Graphic>();
+            HideContinueButton();
         }
 
         void LateUpdate()
@@ -45,9 +39,13 @@ namespace Clicker
         {
             _follow = follow;
             if (body != null)
+            {
                 body.text = text;
-            if (continueLabel != null)
-                continueLabel.text = Loc.Continue;
+                body.raycastTarget = false;
+            }
+            HideContinueButton();
+            if (_graphic != null)
+                _graphic.raycastTarget = false;
             gameObject.SetActive(true);
             UpdatePosition();
         }
@@ -58,9 +56,12 @@ namespace Clicker
             gameObject.SetActive(false);
         }
 
-        void HandleContinue()
+        void HideContinueButton()
         {
-            ContinueClicked?.Invoke();
+            if (continueButton != null)
+                continueButton.gameObject.SetActive(false);
+            if (continueLabel != null)
+                continueLabel.gameObject.SetActive(false);
         }
 
         void UpdatePosition()
@@ -78,7 +79,7 @@ namespace Clicker
                 ? _canvas.worldCamera
                 : null;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, screen, overlayCam, out Vector2 local);
-            rect.anchoredPosition = local + new Vector2(0f, 90f);
+            rect.anchoredPosition = local + followOffset;
         }
     }
 }
