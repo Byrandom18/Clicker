@@ -13,70 +13,54 @@
         false,
         false
     ],
-    "idSave": 441,
+    "idSave": 143,
     "clickerInitialized": true,
     "clickerSaveVersion": 2,
-    "score": 8326.550006458792,
-    "phaseIndex": 8,
-    "hpLeft": 2264145.8891572097,
+    "score": 21619.97367315928,
+    "phaseIndex": 4,
+    "hpLeft": 101901.5185702648,
     "pendingOverflow": 0.0,
     "muted": false,
     "musicMuted": false,
-    "autoUpgradeLeft": 58.218074798583987,
+    "autoUpgradeLeft": 0.0,
     "gameWon": false,
     "endlessMode": false,
     "upgrades": [
         {
             "id": "click_00_punch",
-            "count": 53
+            "count": 27
         },
         {
             "id": "idle_00_tick",
-            "count": 48
+            "count": 19
         },
         {
             "id": "click_01_combo",
-            "count": 42
+            "count": 23
         },
         {
             "id": "idle_01_flow",
-            "count": 37
+            "count": 12
         },
         {
             "id": "click_02_heavy",
-            "count": 36
+            "count": 19
         },
         {
             "id": "idle_02_stream",
-            "count": 29
+            "count": 8
         },
         {
             "id": "click_03_burst",
-            "count": 29
+            "count": 13
         },
         {
             "id": "idle_03_factory",
-            "count": 21
+            "count": 4
         },
         {
             "id": "click_04_storm",
-            "count": 21
-        },
-        {
-            "id": "idle_04_engine",
-            "count": 11
-        },
-        {
-            "id": "click_05_nova",
-            "count": 15
-        },
-        {
-            "id": "idle_05_core",
             "count": 5
-        },
-        {
-            "id": "click_06_overload",
-            "count": 7
         }
     ]
 }

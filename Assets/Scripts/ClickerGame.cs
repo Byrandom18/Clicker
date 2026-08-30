@@ -410,6 +410,7 @@ namespace Clicker
                 YG2.saves.autoUpgradeLeft = 0f;
                 _autoUpgradeAcc = 0f;
                 RefreshBonusButtons();
+                RefreshUi();
             }
         }
 
@@ -432,11 +433,11 @@ namespace Clicker
 
         void RefreshBonusButtons()
         {
-            if (hud == null)
+            if (hud == null || _combat == null)
                 return;
-            bool playing = CanTick() && !_combat.HasPendingInterlude;
-            hud.SetRewardedInteractable(playing);
-            hud.SetAutoUpgradeInteractable(playing && YG2.saves.autoUpgradeLeft <= 0f);
+            bool allowRewards = _booted && !_blockPlay && !_combat.IsWon && !_combat.HasPendingInterlude;
+            hud.SetRewardedInteractable(allowRewards);
+            hud.SetAutoUpgradeInteractable(allowRewards && YG2.saves.autoUpgradeLeft <= 0f);
         }
 
         void BeginInterlude()
@@ -652,10 +653,17 @@ namespace Clicker
         {
             if (battleZone != null)
                 battleZone.SetClicksEnabled(playing);
-            if (hud == null)
+            if (!playing)
+            {
+                if (hud != null)
+                {
+                    hud.SetRewardedInteractable(false);
+                    hud.SetAutoUpgradeInteractable(false);
+                }
                 return;
-            hud.SetRewardedInteractable(playing);
-            hud.SetAutoUpgradeInteractable(playing && YG2.saves.autoUpgradeLeft <= 0f);
+            }
+
+            RefreshBonusButtons();
         }
 
         void RefreshEnemySprites(bool afterKill)
@@ -677,7 +685,7 @@ namespace Clicker
             if (shop != null)
                 shop.Refresh(_economy);
             if (hud != null)
-                hud.Refresh(_economy, _combat, YG2.saves.muted, YG2.saves.musicMuted);
+                hud.Refresh(_economy, _combat, YG2.saves.muted, YG2.saves.musicMuted, YG2.saves.autoUpgradeLeft);
         }
 
         void HandleLang(string _)
@@ -703,6 +711,7 @@ namespace Clicker
         {
             _idleAdBusy = false;
             MarkActivity();
+            RefreshBonusButtons();
         }
 
         void MaybeIdleAd()

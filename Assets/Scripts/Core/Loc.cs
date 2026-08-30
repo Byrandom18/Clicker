@@ -1,3 +1,4 @@
+using UnityEngine;
 using YG;
 
 namespace Clicker
@@ -32,7 +33,7 @@ namespace Clicker
         public static string ClickPower => T("Сила клика", "Click power");
         public static string IdlePower => T("Авто", "Auto");
         public static string PerSecond => T("/с", "/s");
-        public static string Shop => T("Улучшения", "Upgrades");
+        public static string Shop => T("УЛУЧШЕНИЯ", "UPGRADES");
         public static string TabClick => T("Клик", "Click");
         public static string TabIdle => T("Авто", "Auto");
         public static string Buy => T("КУПИТЬ", "BUY");
@@ -45,6 +46,15 @@ namespace Clicker
             "Все противники пали. Вы прошли игру!",
             "All opponents have fallen. You finished the game!");
         public static string MegaAttack => T("МЕГА-АТАКА ЗА РЕКЛАМУ", "MEGA ATTACK FOR AN AD");
+        public static string SmartAutoUpgrade => T(
+            "АКТИВИРОВАТЬ УМНУЮ АВТОПРОКАЧКУ ЗА РЕКЛАМУ",
+            "ACTIVATE SMART AUTO-UPGRADE FOR AN AD");
+
+        public static string AutoUpgradeLeft(float secondsLeft)
+        {
+            int seconds = Mathf.Max(0, Mathf.CeilToInt(secondsLeft));
+            return T($"ОСТАЛОСЬ: {seconds}", $"LEFT: {seconds}");
+        }
         public static string UpgradeClickPower => T("Сила клика", "Click power");
         public static string UpgradeIdlePower => T("Автоматически", "Automatically");
 

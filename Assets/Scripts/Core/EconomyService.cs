@@ -88,7 +88,7 @@ namespace Clicker
             for (int i = 0; i < _defs.Count; i++)
             {
                 var def = _defs[i];
-                if (!CanAfford(def))
+                if (def == null || !IsUnlocked(def))
                     continue;
                 double cost = GetCost(def);
                 if (cost <= 0d)
@@ -104,6 +104,8 @@ namespace Clicker
                 }
             }
 
+            if (best == null || !CanAfford(best))
+                return null;
             return best;
         }
 

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,13 +8,34 @@ namespace Clicker
     public class ShopView : MonoBehaviour
     {
         [SerializeField] Transform shopRoot;
+        [SerializeField] TMP_Text shopTitle;
         [SerializeField] float scrollEdgeClip = 10f;
 
         ShopRowView[] _rows;
 
         void Awake()
         {
+            if (shopTitle == null)
+            {
+                var titles = GetComponentsInChildren<TMP_Text>(true);
+                for (int i = 0; i < titles.Length; i++)
+                {
+                    if (titles[i] != null && titles[i].gameObject.name == "ShopTitle")
+                    {
+                        shopTitle = titles[i];
+                        break;
+                    }
+                }
+            }
+
+            ApplyTitle();
             EnsureViewportClip();
+        }
+
+        public void ApplyTitle()
+        {
+            if (shopTitle != null)
+                shopTitle.text = Loc.Shop;
         }
 
         public ShopRowView[] Rows
@@ -107,6 +129,7 @@ namespace Clicker
 
         public void Refresh(EconomyService economy)
         {
+            ApplyTitle();
             var rows = Rows;
             if (rows == null)
                 return;

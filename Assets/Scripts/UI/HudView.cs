@@ -19,6 +19,7 @@ namespace Clicker
         [SerializeField] Button musicMuteButton;
         [SerializeField] Image musicMuteIcon;
         [SerializeField] Button autoUpgradeButton;
+        [SerializeField] TMP_Text autoUpgradeLabel;
         [SerializeField] Button rewardedButton;
         [SerializeField] TMP_Text rewardedLabel;
         [SerializeField, Range(0f, 0.3f), Tooltip("Насколько сильно кнопка награды увеличивается при дыхании.")]
@@ -40,11 +41,14 @@ namespace Clicker
 
         void OnValidate()
         {
-            if (!Application.isPlaying || rewardedButton == null)
+            if (!Application.isPlaying)
                 return;
-            var feedback = rewardedButton.GetComponent<UiButtonScaleFeedback>();
-            if (feedback != null)
-                feedback.SetBreath(true, rewardedBreathStrength, rewardedBreathIntensity);
+            var first = rewardedButton != null ? rewardedButton.GetComponent<UiButtonScaleFeedback>() : null;
+            if (first != null)
+                first.SetBreath(true, rewardedBreathStrength, rewardedBreathIntensity);
+            var second = autoUpgradeButton != null ? autoUpgradeButton.GetComponent<UiButtonScaleFeedback>() : null;
+            if (second != null)
+                second.SetBreath(true, rewardedBreathStrength, rewardedBreathIntensity);
         }
 
         void OnDestroy()
@@ -54,12 +58,15 @@ namespace Clicker
 
         void ApplyRewardBreath()
         {
-            var feedback = UiButtonScaleFeedback.Ensure(rewardedButton);
-            if (feedback != null)
-                feedback.SetBreath(true, rewardedBreathStrength, rewardedBreathIntensity);
+            var first = UiButtonScaleFeedback.Ensure(rewardedButton);
+            if (first != null)
+                first.SetBreath(true, rewardedBreathStrength, rewardedBreathIntensity);
+            var second = UiButtonScaleFeedback.Ensure(autoUpgradeButton);
+            if (second != null)
+                second.SetBreath(true, rewardedBreathStrength, rewardedBreathIntensity);
         }
 
-        public void Refresh(EconomyService economy, CombatService combat, bool muted, bool musicMuted)
+        public void Refresh(EconomyService economy, CombatService combat, bool muted, bool musicMuted, float autoUpgradeLeft)
         {
             if (economy == null || combat == null)
                 return;
@@ -83,6 +90,12 @@ namespace Clicker
 
             if (rewardedLabel != null)
                 rewardedLabel.text = Loc.MegaAttack;
+            if (autoUpgradeLabel != null)
+            {
+                autoUpgradeLabel.text = autoUpgradeLeft > 0f
+                    ? Loc.AutoUpgradeLeft(autoUpgradeLeft)
+                    : Loc.SmartAutoUpgrade;
+            }
         }
 
         public void SetRewardedInteractable(bool on)
@@ -110,8 +123,12 @@ namespace Clicker
             {
                 autoUpgradeButton = FindButton("AutoUpgradeButton")
                     ?? FindButton("AutoBuyButton")
-                    ?? FindButton("RewardAutoButton");
+                    ?? FindButton("RewardAutoButton")
+                    ?? FindButton("RewardButton (1)");
             }
+
+            if (autoUpgradeLabel == null && autoUpgradeButton != null)
+                autoUpgradeLabel = autoUpgradeButton.GetComponentInChildren<TMP_Text>(true);
         }
 
         Button FindButton(string objectName)
