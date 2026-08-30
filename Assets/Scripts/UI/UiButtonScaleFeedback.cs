@@ -19,6 +19,13 @@ namespace Clicker
         bool _press;
         float _hoverT;
         float _pressT;
+        float _pressPulse;
+
+        public void PlayPressPulse()
+        {
+            _pressPulse = 0.12f;
+            _press = true;
+        }
 
         public void SetBreath(bool enabled, float strength, float intensity)
         {
@@ -58,12 +65,24 @@ namespace Clicker
             _press = false;
             _hoverT = 0f;
             _pressT = 0f;
+            _pressPulse = 0f;
             transform.localScale = _rest;
         }
 
         void Update()
         {
             float dt = Time.unscaledDeltaTime;
+            if (_pressPulse > 0f)
+            {
+                _pressPulse -= dt;
+                _press = true;
+                if (_pressPulse <= 0f)
+                {
+                    _pressPulse = 0f;
+                    _press = false;
+                }
+            }
+
             float step = tweenSpeed * dt;
             _hoverT = Mathf.MoveTowards(_hoverT, _hover ? 1f : 0f, step);
             _pressT = Mathf.MoveTowards(_pressT, _press ? 1f : 0f, step);

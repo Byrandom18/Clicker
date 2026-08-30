@@ -20,6 +20,7 @@ namespace Clicker
         [SerializeField] GameObject lockOverlay;
         [SerializeField] TMP_Text lockLabel;
         [SerializeField, Range(0f, 1f)] float lockOverlayAlpha = 0.78f;
+        [SerializeField] float lockOverlayHeight = 95f;
 
         static readonly Color AffordTop = new Color(0f, 1f, 188f / 255f, 1f);
         static readonly Color AffordBottom = new Color(63f / 255f, 1f, 0f, 1f);
@@ -27,6 +28,14 @@ namespace Clicker
         static readonly Color PoorBottom = new Color(1f, 0f, 54f / 255f, 1f);
 
         public UpgradeDef Definition => definition;
+        public Button BuyButton => buy;
+
+        public void PlayBuyFeedback()
+        {
+            var feedback = buy != null ? buy.GetComponent<UiButtonScaleFeedback>() : null;
+            if (feedback != null)
+                feedback.PlayPressPulse();
+        }
 
         public void SetDefinition(UpgradeDef def)
         {
@@ -39,6 +48,8 @@ namespace Clicker
             if (le == null)
                 le = gameObject.AddComponent<LayoutElement>();
             le.minWidth = 0f;
+            le.minHeight = lockOverlayHeight;
+            le.preferredHeight = lockOverlayHeight;
             le.flexibleWidth = 1f;
             le.layoutPriority = 100;
             if (GetComponent<RectMask2D>() == null)
@@ -69,6 +80,8 @@ namespace Clicker
         void OnValidate()
         {
             ApplyLockOverlayColor();
+            if (lockOverlay != null)
+                ApplyLockOverlayLayout(lockOverlay.transform as RectTransform);
         }
 
         void OnDestroy()
@@ -151,12 +164,24 @@ namespace Clicker
             dim.color = new Color(0.02f, 0.02f, 0.04f, lockOverlayAlpha);
         }
 
+        void ApplyLockOverlayLayout(RectTransform overlayRt)
+        {
+            if (overlayRt == null)
+                return;
+            overlayRt.anchorMin = new Vector2(0f, 0.5f);
+            overlayRt.anchorMax = new Vector2(1f, 0.5f);
+            overlayRt.pivot = new Vector2(0.5f, 0.5f);
+            overlayRt.sizeDelta = new Vector2(0f, lockOverlayHeight);
+            overlayRt.anchoredPosition = Vector2.zero;
+        }
+
         void EnsureLockOverlay()
         {
             if (lockOverlay != null)
             {
                 if (lockLabel == null)
                     lockLabel = lockOverlay.GetComponentInChildren<TMP_Text>(true);
+                ApplyLockOverlayLayout(lockOverlay.transform as RectTransform);
                 return;
             }
 
@@ -165,6 +190,7 @@ namespace Clicker
             {
                 lockOverlay = existing.gameObject;
                 lockLabel = existing.GetComponentInChildren<TMP_Text>(true);
+                ApplyLockOverlayLayout(existing as RectTransform);
                 return;
             }
 
@@ -175,11 +201,7 @@ namespace Clicker
             overlay.transform.SetParent(transform, false);
 
             var overlayRt = overlay.GetComponent<RectTransform>();
-            overlayRt.anchorMin = Vector2.zero;
-            overlayRt.anchorMax = Vector2.one;
-            overlayRt.offsetMin = Vector2.zero;
-            overlayRt.offsetMax = Vector2.zero;
-            overlayRt.pivot = new Vector2(0.5f, 0.5f);
+            ApplyLockOverlayLayout(overlayRt);
             overlayRt.SetAsLastSibling();
 
             var dim = overlay.GetComponent<Image>();

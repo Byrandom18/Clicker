@@ -1147,6 +1147,7 @@ MonoBehaviour:
   lockOverlay: {fileID: 0}
   lockLabel: {fileID: 0}
   lockOverlayAlpha: 0.98
+  lockOverlayHeight: 95
 --- !u!114 &7691870657735778228
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1217,9 +1218,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
   m_MinWidth: 0
-  m_MinHeight: 88
+  m_MinHeight: 95
   m_PreferredWidth: -1
-  m_PreferredHeight: 88
+  m_PreferredHeight: 95
   m_FlexibleWidth: 1
   m_FlexibleHeight: -1
   m_LayoutPriority: 100

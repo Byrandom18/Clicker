@@ -88,6 +88,23 @@ namespace Clicker
             }
         }
 
+        public ShopRowView FindRow(UpgradeDef def)
+        {
+            var rows = Rows;
+            if (rows == null || def == null)
+                return null;
+            for (int i = 0; i < rows.Length; i++)
+            {
+                var row = rows[i];
+                if (row == null || row.Definition == null)
+                    continue;
+                if (row.Definition == def || row.Definition.id == def.id)
+                    return row;
+            }
+
+            return null;
+        }
+
         public void Refresh(EconomyService economy)
         {
             var rows = Rows;

@@ -33,6 +33,7 @@ namespace Clicker
             s.pendingOverflow = 0d;
             s.gameWon = false;
             s.endlessMode = false;
+            s.autoUpgradeLeft = 0f;
             s.upgrades = new List<UpgradeSave>();
         }
 

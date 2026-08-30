@@ -19,6 +19,8 @@ namespace YG
         public double hpLeft = -1d;
         public double pendingOverflow;
         public bool muted;
+        public bool musicMuted;
+        public float autoUpgradeLeft;
         public bool gameWon;
         public bool endlessMode;
         public List<UpgradeSave> upgrades = new List<UpgradeSave>();

@@ -16,6 +16,9 @@ namespace Clicker
         [SerializeField] Image[] phaseDots;
         [SerializeField] Button muteButton;
         [SerializeField] Image muteIcon;
+        [SerializeField] Button musicMuteButton;
+        [SerializeField] Image musicMuteIcon;
+        [SerializeField] Button autoUpgradeButton;
         [SerializeField] Button rewardedButton;
         [SerializeField] TMP_Text rewardedLabel;
         [SerializeField, Range(0f, 0.3f), Tooltip("Насколько сильно кнопка награды увеличивается при дыхании.")]
@@ -24,10 +27,13 @@ namespace Clicker
         float rewardedBreathIntensity = 1.2f;
 
         public Button MuteButton => muteButton;
+        public Button MusicMuteButton => musicMuteButton;
+        public Button AutoUpgradeButton => autoUpgradeButton;
         public Button RewardedButton => rewardedButton;
 
         void Awake()
         {
+            ResolveExtraButtons();
             UiButtonScaleFeedback.EnsureAll();
             ApplyRewardBreath();
         }
@@ -53,7 +59,7 @@ namespace Clicker
                 feedback.SetBreath(true, rewardedBreathStrength, rewardedBreathIntensity);
         }
 
-        public void Refresh(EconomyService economy, CombatService combat, bool muted)
+        public void Refresh(EconomyService economy, CombatService combat, bool muted, bool musicMuted)
         {
             if (economy == null || combat == null)
                 return;
@@ -72,12 +78,8 @@ namespace Clicker
             if (hpFill != null)
                 hpFill.fillAmount = combat.HpFill01;
 
-            if (muteIcon != null)
-            {
-                Color c = muteIcon.color;
-                c.a = muted ? 0.4f : 1f;
-                muteIcon.color = c;
-            }
+            ApplyMuteIcon(muteIcon, muted);
+            ApplyMuteIcon(musicMuteIcon, musicMuted);
 
             if (rewardedLabel != null)
                 rewardedLabel.text = Loc.MegaAttack;
@@ -87,6 +89,50 @@ namespace Clicker
         {
             if (rewardedButton != null)
                 rewardedButton.interactable = on;
+        }
+
+        public void SetAutoUpgradeInteractable(bool on)
+        {
+            if (autoUpgradeButton != null)
+                autoUpgradeButton.interactable = on;
+        }
+
+        void ResolveExtraButtons()
+        {
+            if (musicMuteButton == null)
+                musicMuteButton = FindButton("MuteMusicButton");
+            if (musicMuteIcon == null && musicMuteButton != null)
+                musicMuteIcon = musicMuteButton.GetComponentInChildren<Image>(true);
+            if (musicMuteButton != null && musicMuteButton.targetGraphic == null && musicMuteIcon != null)
+                musicMuteButton.targetGraphic = musicMuteIcon;
+
+            if (autoUpgradeButton == null)
+            {
+                autoUpgradeButton = FindButton("AutoUpgradeButton")
+                    ?? FindButton("AutoBuyButton")
+                    ?? FindButton("RewardAutoButton");
+            }
+        }
+
+        Button FindButton(string objectName)
+        {
+            var buttons = GetComponentsInChildren<Button>(true);
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                if (buttons[i] != null && buttons[i].gameObject.name == objectName)
+                    return buttons[i];
+            }
+
+            return null;
+        }
+
+        static void ApplyMuteIcon(Image icon, bool muted)
+        {
+            if (icon == null)
+                return;
+            Color c = icon.color;
+            c.a = muted ? 0.4f : 1f;
+            icon.color = c;
         }
 
         public void SnapHearts(int completedStages)

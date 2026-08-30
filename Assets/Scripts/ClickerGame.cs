@@ -39,6 +39,14 @@ namespace Clicker
         [SerializeField, Range(0.3f, 4f), Tooltip("Множитель размера префаба Cartoon FX.")]
         float stageVfxScale = 1f;
 
+        [Header("Audio")]
+        [SerializeField] AudioSource musicSource;
+
+        [Header("Auto Upgrade")]
+        [SerializeField] float autoUpgradeSeconds = 120f;
+        [SerializeField] float autoUpgradeInterval = 0.3f;
+        [SerializeField] float autoUpgradeClicksPerSecond = 3f;
+
         EconomyService _economy;
         CombatService _combat;
         InterstitialGate _ads;
@@ -50,6 +58,7 @@ namespace Clicker
         float _lastSave;
         float _lastActivity;
         float _hudAcc;
+        float _autoUpgradeAcc;
         Coroutine _swapRoutine;
         Coroutine _bubbleRoutine;
         GameObject _stageBurstGo;
@@ -169,6 +178,7 @@ namespace Clicker
                 RefreshUi();
             }
 
+            TickAutoUpgrade();
             MaybeIdleAd();
             MaybeSave(false);
         }
@@ -217,6 +227,7 @@ namespace Clicker
             _economy.SetDefinitions(catalog);
 
             ApplyMute(YG2.saves.muted, false);
+            ApplyMusicMute(YG2.saves.musicMuted, false);
             if (slots != null)
             {
                 slots.SnapToPhase(_combat.PhaseIndex);
@@ -232,8 +243,12 @@ namespace Clicker
             {
                 if (hud.MuteButton != null)
                     hud.MuteButton.onClick.AddListener(ToggleMute);
+                if (hud.MusicMuteButton != null)
+                    hud.MusicMuteButton.onClick.AddListener(ToggleMusicMute);
                 if (hud.RewardedButton != null)
                     hud.RewardedButton.onClick.AddListener(HandleRewarded);
+                if (hud.AutoUpgradeButton != null)
+                    hud.AutoUpgradeButton.onClick.AddListener(HandleAutoUpgrade);
                 hud.SnapHearts(_combat.IsWon || _combat.IsEndless
                     ? CombatService.CampaignStagesPerEnemy
                     : _combat.CompletedStagesFor(_combat.ActiveEnemyIndex));
@@ -326,12 +341,102 @@ namespace Clicker
             RefreshUi();
         }
 
+        void ToggleMusicMute()
+        {
+            ApplyMusicMute(!YG2.saves.musicMuted, false);
+            _dirty = true;
+            RefreshUi();
+        }
+
         void ApplyMute(bool muted, bool save)
         {
             YG2.saves.muted = muted;
             AudioListener.volume = muted ? 0f : 1f;
             if (save)
                 MaybeSave(true);
+        }
+
+        void ApplyMusicMute(bool muted, bool save)
+        {
+            YG2.saves.musicMuted = muted;
+            if (musicSource != null)
+            {
+                musicSource.ignoreListenerVolume = true;
+                musicSource.mute = muted;
+            }
+
+            if (save)
+                MaybeSave(true);
+        }
+
+        void HandleAutoUpgrade()
+        {
+            if (!_booted || !CanTick() || _combat.HasPendingInterlude)
+                return;
+
+            MarkActivity();
+            YG2.RewardedAdvShow("autoUpgrade", () =>
+            {
+                if (_combat == null || _combat.IsWon || _blockPlay)
+                    return;
+                YG2.saves.autoUpgradeLeft = Mathf.Max(0.1f, autoUpgradeSeconds);
+                _autoUpgradeAcc = 0f;
+                TryAutoBuy();
+                RefreshBonusButtons();
+                MaybeSave(true);
+                RefreshUi();
+            });
+        }
+
+        void TickAutoUpgrade()
+        {
+            if (!_booted || YG2.saves.autoUpgradeLeft <= 0f)
+                return;
+
+            if (CanTick())
+            {
+                YG2.saves.autoUpgradeLeft -= Time.deltaTime;
+                _autoUpgradeAcc += Time.deltaTime;
+                float interval = Mathf.Max(0.05f, autoUpgradeInterval);
+                while (_autoUpgradeAcc >= interval)
+                {
+                    _autoUpgradeAcc -= interval;
+                    TryAutoBuy();
+                }
+            }
+
+            if (YG2.saves.autoUpgradeLeft <= 0f)
+            {
+                YG2.saves.autoUpgradeLeft = 0f;
+                _autoUpgradeAcc = 0f;
+                RefreshBonusButtons();
+            }
+        }
+
+        void TryAutoBuy()
+        {
+            if (_economy == null || !CanTick())
+                return;
+            var def = _economy.FindBestValueBuy(autoUpgradeClicksPerSecond);
+            if (def == null)
+                return;
+            if (shop != null)
+            {
+                var row = shop.FindRow(def);
+                if (row != null)
+                    row.PlayBuyFeedback();
+            }
+
+            HandleBuy(def);
+        }
+
+        void RefreshBonusButtons()
+        {
+            if (hud == null)
+                return;
+            bool playing = CanTick() && !_combat.HasPendingInterlude;
+            hud.SetRewardedInteractable(playing);
+            hud.SetAutoUpgradeInteractable(playing && YG2.saves.autoUpgradeLeft <= 0f);
         }
 
         void BeginInterlude()
@@ -547,8 +652,10 @@ namespace Clicker
         {
             if (battleZone != null)
                 battleZone.SetClicksEnabled(playing);
-            if (hud != null)
-                hud.SetRewardedInteractable(playing);
+            if (hud == null)
+                return;
+            hud.SetRewardedInteractable(playing);
+            hud.SetAutoUpgradeInteractable(playing && YG2.saves.autoUpgradeLeft <= 0f);
         }
 
         void RefreshEnemySprites(bool afterKill)
@@ -570,7 +677,7 @@ namespace Clicker
             if (shop != null)
                 shop.Refresh(_economy);
             if (hud != null)
-                hud.Refresh(_economy, _combat, YG2.saves.muted);
+                hud.Refresh(_economy, _combat, YG2.saves.muted, YG2.saves.musicMuted);
         }
 
         void HandleLang(string _)
