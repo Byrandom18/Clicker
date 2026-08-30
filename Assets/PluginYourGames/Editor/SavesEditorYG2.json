@@ -13,104 +13,20 @@
         false,
         false
     ],
-    "idSave": 518,
+    "idSave": 52,
     "clickerInitialized": true,
     "clickerSaveVersion": 2,
-    "score": 32414429.77572906,
-    "phaseIndex": 15,
-    "hpLeft": 65585478.27271678,
+    "score": 429995.3162500001,
+    "phaseIndex": 6,
+    "hpLeft": 663438.25,
     "pendingOverflow": 0.0,
     "muted": false,
-    "gameWon": true,
-    "endlessMode": true,
+    "gameWon": false,
+    "endlessMode": false,
     "upgrades": [
         {
             "id": "click_00_punch",
-            "count": 100
-        },
-        {
-            "id": "idle_00_tick",
-            "count": 1
-        },
-        {
-            "id": "click_01_combo",
-            "count": 11
-        },
-        {
-            "id": "idle_01_flow",
-            "count": 5
-        },
-        {
-            "id": "click_02_heavy",
-            "count": 3
-        },
-        {
-            "id": "idle_02_stream",
-            "count": 3
-        },
-        {
-            "id": "click_03_burst",
-            "count": 3
-        },
-        {
-            "id": "idle_03_factory",
-            "count": 1
-        },
-        {
-            "id": "click_04_storm",
-            "count": 1
-        },
-        {
-            "id": "idle_04_engine",
-            "count": 1
-        },
-        {
-            "id": "click_05_nova",
-            "count": 1
-        },
-        {
-            "id": "idle_05_core",
-            "count": 1
-        },
-        {
-            "id": "click_06_overload",
-            "count": 1
-        },
-        {
-            "id": "idle_06_reactor",
-            "count": 2
-        },
-        {
-            "id": "click_07_breaker",
-            "count": 2
-        },
-        {
-            "id": "idle_07_dynamo",
-            "count": 1
-        },
-        {
-            "id": "click_08_cataclysm",
-            "count": 1
-        },
-        {
-            "id": "idle_08_orbit",
-            "count": 1
-        },
-        {
-            "id": "click_09_singularity",
-            "count": 1
-        },
-        {
-            "id": "idle_09_pulsar",
-            "count": 1
-        },
-        {
-            "id": "click_10_omega",
-            "count": 1
-        },
-        {
-            "id": "idle_10_quasar",
-            "count": 1
+            "count": 4
         }
     ]
 }
