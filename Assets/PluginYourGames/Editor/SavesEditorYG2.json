@@ -13,12 +13,12 @@
         false,
         false
     ],
-    "idSave": 143,
+    "idSave": 350,
     "clickerInitialized": true,
     "clickerSaveVersion": 2,
-    "score": 21619.97367315928,
-    "phaseIndex": 4,
-    "hpLeft": 101901.5185702648,
+    "score": 64628769.75966488,
+    "phaseIndex": 12,
+    "hpLeft": 3115164.046468612,
     "pendingOverflow": 0.0,
     "muted": false,
     "musicMuted": false,
@@ -28,7 +28,7 @@
     "upgrades": [
         {
             "id": "click_00_punch",
-            "count": 27
+            "count": 28
         },
         {
             "id": "idle_00_tick",
@@ -36,7 +36,7 @@
         },
         {
             "id": "click_01_combo",
-            "count": 23
+            "count": 24
         },
         {
             "id": "idle_01_flow",

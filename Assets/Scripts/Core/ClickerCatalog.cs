@@ -10,6 +10,8 @@ namespace Clicker
         const string UpgradesPath = "Data/Upgrades";
         const string EnemiesPath = "Data/Enemies";
         const string EnemyPrefabPath = "Prefabs/EnemyView";
+        const string ClickHitVfxPath = "Prefabs/ClickHit";
+        const string RewardedHitVfxPath = "Prefabs/RewardedHit";
 
         public static BalanceConfig LoadBalance()
         {
@@ -24,6 +26,16 @@ namespace Clicker
         public static GameObject LoadEnemyPrefab()
         {
             return Resources.Load<GameObject>(EnemyPrefabPath);
+        }
+
+        public static GameObject LoadClickHitVfx()
+        {
+            return Resources.Load<GameObject>(ClickHitVfxPath);
+        }
+
+        public static GameObject LoadRewardedHitVfx()
+        {
+            return Resources.Load<GameObject>(RewardedHitVfxPath);
         }
 
         public static UpgradeDef[] LoadUpgrades()

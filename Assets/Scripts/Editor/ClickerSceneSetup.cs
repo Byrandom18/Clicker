@@ -41,6 +41,7 @@ namespace Clicker.EditorTools
             var battle = Object.FindFirstObjectByType<BattleZoneClick>(FindObjectsInactive.Include);
             var bubble = Object.FindFirstObjectByType<SpeechBubbleView>(FindObjectsInactive.Include);
             var victory = Object.FindFirstObjectByType<VictoryView>(FindObjectsInactive.Include);
+            var popups = Object.FindFirstObjectByType<DamagePopupPool>(FindObjectsInactive.Include);
 
             var victoryPanel = FindNamed("VictoryPanel");
             if (victory == null && victoryPanel != null)
@@ -89,6 +90,8 @@ namespace Clicker.EditorTools
                 gameSo.FindProperty("bubble").objectReferenceValue = bubble;
             if (victory != null)
                 gameSo.FindProperty("victory").objectReferenceValue = victory;
+            if (popups != null)
+                gameSo.FindProperty("damagePopups").objectReferenceValue = popups;
             var vfxProp = gameSo.FindProperty("stageChangeVfxPrefab");
             if (vfxProp != null)
             {
@@ -96,6 +99,9 @@ namespace Clicker.EditorTools
                 if (vfx != null)
                     vfxProp.objectReferenceValue = vfx;
             }
+
+            AssignPrefab(gameSo, "clickVfxPrefab", ClickerPaths.ClickHitVfx);
+            AssignPrefab(gameSo, "rewardedVfxPrefab", ClickerPaths.RewardedHitVfx);
 
             gameSo.ApplyModifiedPropertiesWithoutUndo();
 
@@ -105,6 +111,16 @@ namespace Clicker.EditorTools
             EditorSceneManager.MarkSceneDirty(scene);
             Selection.activeGameObject = game.gameObject;
             Debug.Log("Clicker: scene wired (GameRoot refs, enemies, data from Assets/Resources/Data).");
+        }
+
+        static void AssignPrefab(SerializedObject so, string property, string path)
+        {
+            var prop = so.FindProperty(property);
+            if (prop == null)
+                return;
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (prefab != null)
+                prop.objectReferenceValue = prefab;
         }
 
         [MenuItem("Clicker/Add World Objects To Open Scene")]

@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 46efe9c22df9e304da8ea386e05210f0
+guid: b1dd5f49a3064774c8eae4d737ededeb
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -4900947547709660000
-    second: ui-icon-slot-transparent_0
+      213: -2132956935838155565
+    second: border_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -52,7 +52,7 @@ TextureImporter:
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 100
-  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteBorder: {x: 7, y: 7, z: 7, w: 7}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -152,13 +152,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: ui-icon-slot-transparent_0
+      name: border_0
       rect:
         serializedVersion: 2
-        x: 7
-        y: 7
-        width: 746
-        height: 850
+        x: 0
+        y: 0
+        width: 64
+        height: 64
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -167,8 +167,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0a4a1f3fb265cfbb0800000000000000
-      internalID: -4900947547709660000
+      spriteID: 3dc392eb7f63662e0800000000000000
+      internalID: -2132956935838155565
       vertices: []
       indices: 
       edges: []
@@ -187,7 +187,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      ui-icon-slot-transparent_0: -4900947547709660000
+      border_0: -2132956935838155565
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

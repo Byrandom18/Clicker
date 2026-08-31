@@ -22,6 +22,7 @@ namespace Clicker
         [SerializeField] HudView hud;
         [SerializeField] SpeechBubbleView bubble;
         [SerializeField] VictoryView victory;
+        [SerializeField] DamagePopupPool damagePopups;
 
         [Header("Timing")]
         [SerializeField] float idleAdSeconds = 10f;
@@ -38,6 +39,12 @@ namespace Clicker
         float stageCoverOpacity = 0.82f;
         [SerializeField, Range(0.3f, 4f), Tooltip("Множитель размера префаба Cartoon FX.")]
         float stageVfxScale = 1f;
+
+        [Header("Hit VFX")]
+        [SerializeField] GameObject clickVfxPrefab;
+        [SerializeField] GameObject rewardedVfxPrefab;
+        [SerializeField, Range(0.15f, 2.5f)] float clickVfxScale = 0.4f;
+        [SerializeField, Range(0.3f, 3f)] float rewardedVfxScale = 1.25f;
 
         [Header("Audio")]
         [SerializeField] AudioSource musicSource;
@@ -63,6 +70,8 @@ namespace Clicker
         Coroutine _bubbleRoutine;
         GameObject _stageBurstGo;
         GameObject _stageCoverGo;
+        HitVfxPool _clickHits;
+        HitVfxPool _rewardedHits;
         int _bubbleLinePhase = -1;
         const float AutoSaveInterval = 30f;
 
@@ -91,6 +100,8 @@ namespace Clicker
                 bubble = FindFirstObjectByType<SpeechBubbleView>(FindObjectsInactive.Include);
             if (victory == null)
                 victory = FindFirstObjectByType<VictoryView>(FindObjectsInactive.Include);
+            if (damagePopups == null)
+                damagePopups = FindFirstObjectByType<DamagePopupPool>(FindObjectsInactive.Include);
         }
 
         void OnEnable()
@@ -238,6 +249,8 @@ namespace Clicker
                 bubble.Hide();
             if (victory != null)
                 victory.Hide();
+            EnsureDamagePopups();
+            EnsureHitVfx();
 
             if (hud != null)
             {
@@ -284,7 +297,7 @@ namespace Clicker
                    && Time.timeScale > 0f;
         }
 
-        void HandleClick()
+        void HandleClick(Vector2 screenPos)
         {
             if (!_booted || !CanTick())
                 return;
@@ -294,6 +307,9 @@ namespace Clicker
                 PunchActive();
             double amount = _economy.ClickPower;
             _economy.AddIncome(amount);
+            PlayClickHit(screenPos);
+            if (damagePopups != null)
+                damagePopups.Spawn(amount, screenPos);
             if (_combat.ApplyDamage(amount))
                 BeginInterlude();
             _dirty = true;
@@ -327,6 +343,7 @@ namespace Clicker
                     return;
                 PunchActive();
                 _economy.AddIncome(dmg);
+                PlayRewardedHit(dmg);
                 if (_combat.ApplyDamage(dmg))
                     BeginInterlude();
                 MaybeSave(true);
@@ -732,6 +749,88 @@ namespace Clicker
                 _idleAdBusy = false;
                 MarkActivity();
             });
+        }
+
+        void EnsureDamagePopups()
+        {
+            if (damagePopups != null)
+                return;
+            damagePopups = FindFirstObjectByType<DamagePopupPool>(FindObjectsInactive.Include);
+            if (damagePopups != null)
+                return;
+
+            Transform canvasRoot = null;
+            if (battleZone != null)
+            {
+                var canvas = battleZone.GetComponentInParent<Canvas>();
+                if (canvas != null)
+                    canvasRoot = canvas.transform;
+            }
+
+            if (canvasRoot == null)
+            {
+                var canvas = FindFirstObjectByType<Canvas>();
+                if (canvas != null)
+                    canvasRoot = canvas.transform;
+            }
+
+            if (canvasRoot == null)
+                return;
+            damagePopups = DamagePopupPool.Create(canvasRoot);
+        }
+
+        void EnsureHitVfx()
+        {
+            if (clickVfxPrefab == null)
+                clickVfxPrefab = ClickerCatalog.LoadClickHitVfx();
+            if (rewardedVfxPrefab == null)
+                rewardedVfxPrefab = ClickerCatalog.LoadRewardedHitVfx();
+
+            if (_clickHits == null && clickVfxPrefab != null)
+                _clickHits = HitVfxPool.Create("ClickHits", transform, clickVfxPrefab, 10, clickVfxScale, false, true);
+            if (_rewardedHits == null && rewardedVfxPrefab != null)
+                _rewardedHits = HitVfxPool.Create("RewardedHits", transform, rewardedVfxPrefab, 2, rewardedVfxScale, true, false);
+        }
+
+        void PlayClickHit(Vector2 screenPos)
+        {
+            if (_clickHits != null)
+                _clickHits.Play(ScreenToWorld(screenPos), clickVfxScale);
+        }
+
+        void PlayRewardedHit(double dmg)
+        {
+            Vector3 world = ActiveEnemyWorld();
+            if (_rewardedHits != null)
+                _rewardedHits.Play(world, rewardedVfxScale);
+            if (damagePopups != null)
+                damagePopups.SpawnMega(dmg, WorldToScreen(world));
+        }
+
+        Vector3 ActiveEnemyWorld()
+        {
+            if (slots == null || _combat == null)
+                return Vector3.zero;
+            var view = slots.GetEnemy(_combat.ActiveEnemyIndex);
+            return view != null ? view.WorldCenter : Vector3.zero;
+        }
+
+        static Vector3 ScreenToWorld(Vector2 screen)
+        {
+            Camera cam = Camera.main;
+            if (cam == null)
+                return Vector3.zero;
+            float z = Mathf.Abs(cam.transform.position.z);
+            return cam.ScreenToWorldPoint(new Vector3(screen.x, screen.y, z));
+        }
+
+        static Vector2 WorldToScreen(Vector3 world)
+        {
+            Camera cam = Camera.main;
+            if (cam == null)
+                return new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+            Vector3 screen = cam.WorldToScreenPoint(world);
+            return new Vector2(screen.x, screen.y);
         }
 
         void PunchActive()

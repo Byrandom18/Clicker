@@ -7,7 +7,7 @@ namespace Clicker
 {
     public class BattleZoneClick : MonoBehaviour, IPointerDownHandler
     {
-        public static event Action Pressed;
+        public static event Action<Vector2> Pressed;
 
         public bool ClicksEnabled { get; private set; } = true;
 
@@ -29,7 +29,7 @@ namespace Clicker
         {
             if (!ClicksEnabled)
                 return;
-            Pressed?.Invoke();
+            Pressed?.Invoke(eventData.position);
         }
     }
 }

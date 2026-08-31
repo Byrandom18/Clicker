@@ -30,7 +30,13 @@ namespace Clicker.EditorTools
             else
                 Debug.Log("Clicker: keep existing Assets/Prefabs/ShopRow.prefab (scene instances depend on its fileIDs).");
 
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(ClickerPaths.DamagePopup) == null)
+                CreateDamagePopupPrefab();
+            else
+                Debug.Log("Clicker: keep existing Assets/Prefabs/DamagePopup.prefab.");
+
             SyncEnemyPrefabToResources();
+            SyncHitVfxToResources();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("Clicker: prefabs at Assets/Prefabs, data at Assets/Resources/Data.");
@@ -44,6 +50,21 @@ namespace Clicker.EditorTools
             if (AssetDatabase.LoadAssetAtPath<GameObject>(ClickerPaths.EnemyViewResources) != null)
                 AssetDatabase.DeleteAsset(ClickerPaths.EnemyViewResources);
             AssetDatabase.CopyAsset(ClickerPaths.EnemyView, ClickerPaths.EnemyViewResources);
+        }
+
+        static void SyncHitVfxToResources()
+        {
+            CopyToResources(ClickerPaths.ClickHitVfx, ClickerPaths.ResourcesPrefabDir + "/ClickHit.prefab");
+            CopyToResources(ClickerPaths.RewardedHitVfx, ClickerPaths.ResourcesPrefabDir + "/RewardedHit.prefab");
+        }
+
+        static void CopyToResources(string src, string dst)
+        {
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(src) == null)
+                return;
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(dst) != null)
+                AssetDatabase.DeleteAsset(dst);
+            AssetDatabase.CopyAsset(src, dst);
         }
 
         static void CreateEnemyPrefab()
@@ -153,6 +174,14 @@ namespace Clicker.EditorTools
 
             PrefabUtility.SaveAsPrefabAsset(root, ClickerPaths.ShopRow);
             Object.DestroyImmediate(root);
+        }
+
+        static void CreateDamagePopupPrefab()
+        {
+            var popup = DamagePopup.Create(null, null, 40f);
+            popup.gameObject.SetActive(true);
+            PrefabUtility.SaveAsPrefabAsset(popup.gameObject, ClickerPaths.DamagePopup);
+            Object.DestroyImmediate(popup.gameObject);
         }
 
         static GameObject CreateChild(Transform parent, string name)
