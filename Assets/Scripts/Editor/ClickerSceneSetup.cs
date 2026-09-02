@@ -102,6 +102,11 @@ namespace Clicker.EditorTools
 
             AssignPrefab(gameSo, "clickVfxPrefab", ClickerPaths.ClickHitVfx);
             AssignPrefab(gameSo, "rewardedVfxPrefab", ClickerPaths.RewardedHitVfx);
+            AssignSfx(gameSo, "clickSfx", "click");
+            AssignSfx(gameSo, "buySfx", "buy");
+            AssignSfx(gameSo, "phaseSfx", "phase");
+            AssignSfx(gameSo, "explosionSfx", "explosion");
+            AssignSfx(gameSo, "uiSfx", "ui");
 
             gameSo.ApplyModifiedPropertiesWithoutUndo();
 
@@ -121,6 +126,30 @@ namespace Clicker.EditorTools
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             if (prefab != null)
                 prop.objectReferenceValue = prefab;
+        }
+
+        static void AssignSfx(SerializedObject so, string property, string fileName)
+        {
+            var prop = so.FindProperty(property);
+            if (prop == null || prop.objectReferenceValue != null)
+                return;
+            var clip = LoadSfxClip(fileName);
+            if (clip != null)
+                prop.objectReferenceValue = clip;
+        }
+
+        static AudioClip LoadSfxClip(string fileName)
+        {
+            string[] exts = { ".ogg", ".mp3", ".wav" };
+            for (int i = 0; i < exts.Length; i++)
+            {
+                var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(
+                    ClickerPaths.AudioDir + "/" + fileName + exts[i]);
+                if (clip != null)
+                    return clip;
+            }
+
+            return null;
         }
 
         [MenuItem("Clicker/Add World Objects To Open Scene")]

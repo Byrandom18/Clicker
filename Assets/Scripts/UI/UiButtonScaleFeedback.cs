@@ -6,6 +6,7 @@ namespace Clicker
 {
     public class UiButtonScaleFeedback : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
     {
+        [SerializeField] bool playClickSfx = true;
         [SerializeField] bool breath;
         [SerializeField] float breathStrength = 0.08f;
         [SerializeField] float breathIntensity = 1.2f;
@@ -25,6 +26,11 @@ namespace Clicker
         {
             _pressPulse = 0.12f;
             _press = true;
+        }
+
+        public void SetPlayClickSfx(bool enabled)
+        {
+            playClickSfx = enabled;
         }
 
         public void SetBreath(bool enabled, float strength, float intensity)
@@ -114,6 +120,8 @@ namespace Clicker
             if (!CanReact())
                 return;
             _press = true;
+            if (playClickSfx)
+                Sfx.Ui();
         }
 
         public void OnPointerUp(PointerEventData eventData)

@@ -9,6 +9,7 @@ namespace Clicker.EditorTools
         public const string EnemyDir = DataRoot + "/Enemies";
         public const string Balance = DataRoot + "/Balance.asset";
         public const string Dialogs = DataRoot + "/Dialogs.asset";
+        public const string AudioDir = "Assets/Resources/Audio";
         public const string PrefabDir = "Assets/Prefabs";
         public const string ResourcesPrefabDir = "Assets/Resources/Prefabs";
         public const string ShopRow = PrefabDir + "/ShopRow.prefab";

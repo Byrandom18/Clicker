@@ -12,6 +12,7 @@ namespace Clicker.EditorTools
         public static void CreateDefaultData()
         {
             EnsureFolder("Assets/Resources");
+            EnsureFolder(ClickerPaths.AudioDir);
             EnsureFolder(ClickerPaths.DataRoot);
             EnsureFolder(ClickerPaths.DataRoot + "/Upgrades");
             EnsureFolder(ClickerPaths.ClickDir);

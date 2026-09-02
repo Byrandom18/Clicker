@@ -12,6 +12,7 @@ namespace Clicker
         const string EnemyPrefabPath = "Prefabs/EnemyView";
         const string ClickHitVfxPath = "Prefabs/ClickHit";
         const string RewardedHitVfxPath = "Prefabs/RewardedHit";
+        const string SfxPath = "Audio/";
 
         public static BalanceConfig LoadBalance()
         {
@@ -36,6 +37,27 @@ namespace Clicker
         public static GameObject LoadRewardedHitVfx()
         {
             return Resources.Load<GameObject>(RewardedHitVfxPath);
+        }
+
+        public static AudioClip LoadSfx(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName))
+                return null;
+            return Resources.Load<AudioClip>(SfxPath + fileName);
+        }
+
+        public static AudioClip[] LoadClickSfx()
+        {
+            var names = new[] { "click", "click_02", "click_03", "click_04", "click_05" };
+            var list = new List<AudioClip>(names.Length);
+            for (int i = 0; i < names.Length; i++)
+            {
+                var clip = LoadSfx(names[i]);
+                if (clip != null)
+                    list.Add(clip);
+            }
+
+            return list.ToArray();
         }
 
         public static UpgradeDef[] LoadUpgrades()

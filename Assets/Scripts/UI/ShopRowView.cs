@@ -61,7 +61,9 @@ namespace Clicker
             if (buy != null)
             {
                 buy.onClick.AddListener(HandleBuy);
-                UiButtonScaleFeedback.Ensure(buy);
+                var feedback = UiButtonScaleFeedback.Ensure(buy);
+                if (feedback != null)
+                    feedback.SetPlayClickSfx(false);
             }
             if (power != null)
             {

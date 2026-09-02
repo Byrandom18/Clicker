@@ -48,6 +48,16 @@ namespace Clicker
 
         [Header("Audio")]
         [SerializeField] AudioSource musicSource;
+        [SerializeField, Tooltip("Если пусто — Resources/Audio/click и click_02..05")]
+        AudioClip clickSfx;
+        [SerializeField, Tooltip("Если пусто — Resources/Audio/buy")]
+        AudioClip buySfx;
+        [SerializeField, Tooltip("Если пусто — Resources/Audio/phase")]
+        AudioClip phaseSfx;
+        [SerializeField, Tooltip("Если пусто — Resources/Audio/explosion")]
+        AudioClip explosionSfx;
+        [SerializeField, Tooltip("Если пусто — Resources/Audio/ui")]
+        AudioClip uiSfx;
 
         [Header("Auto Upgrade")]
         [SerializeField] float autoUpgradeSeconds = 120f;
@@ -83,6 +93,7 @@ namespace Clicker
                 balance = ClickerCatalog.LoadBalance();
             if (dialogs == null)
                 dialogs = ClickerCatalog.LoadDialogs();
+            BindSfx();
             _ads = new InterstitialGate(this);
         }
 
@@ -145,6 +156,7 @@ namespace Clicker
             StopSwapRoutine();
             StopBubbleRoutine();
             StopStageVfx(true);
+            Sfx.Release(transform);
             FlushSave();
         }
 
@@ -307,6 +319,7 @@ namespace Clicker
                 PunchActive();
             double amount = _economy.ClickPower;
             _economy.AddIncome(amount);
+            Sfx.Click();
             PlayClickHit(screenPos);
             if (damagePopups != null)
                 damagePopups.Spawn(amount, screenPos);
@@ -322,6 +335,7 @@ namespace Clicker
                 return;
             if (!_economy.TryBuy(def))
                 return;
+            Sfx.Buy();
             MarkActivity();
             MaybeSave(true);
             RefreshUi();
@@ -343,6 +357,7 @@ namespace Clicker
                     return;
                 PunchActive();
                 _economy.AddIncome(dmg);
+                Sfx.Explosion();
                 PlayRewardedHit(dmg);
                 if (_combat.ApplyDamage(dmg))
                     BeginInterlude();
@@ -353,7 +368,10 @@ namespace Clicker
 
         void ToggleMute()
         {
-            ApplyMute(!YG2.saves.muted, false);
+            bool next = !YG2.saves.muted;
+            ApplyMute(next, false);
+            if (!next)
+                Sfx.Ui();
             _dirty = true;
             RefreshUi();
         }
@@ -497,6 +515,7 @@ namespace Clicker
             float total = fadeIn + hold + fadeOut;
 
             StopStageVfx(false);
+            Sfx.Phase();
             if (stageChangeVfxPrefab != null)
                 _stageBurstGo = StageChangeVfx.SpawnBurst(
                     stageChangeVfxPrefab, pos, StageChangeVfx.ScaleFor(size) * stageVfxScale);
@@ -777,6 +796,11 @@ namespace Clicker
             if (canvasRoot == null)
                 return;
             damagePopups = DamagePopupPool.Create(canvasRoot);
+        }
+
+        void BindSfx()
+        {
+            Sfx.Bind(transform, clickSfx, buySfx, phaseSfx, explosionSfx, uiSfx);
         }
 
         void EnsureHitVfx()

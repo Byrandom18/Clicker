@@ -13,18 +13,18 @@
         false,
         false
     ],
-    "idSave": 320,
+    "idSave": 358,
     "clickerInitialized": true,
     "clickerSaveVersion": 2,
-    "score": 149855469.4496699,
+    "score": 152463078.74913568,
     "phaseIndex": 15,
-    "hpLeft": 0.0,
+    "hpLeft": 63503783.325533989,
     "pendingOverflow": 0.0,
     "muted": false,
     "musicMuted": false,
-    "autoUpgradeLeft": 0.24758797883987428,
+    "autoUpgradeLeft": 0.0,
     "gameWon": true,
-    "endlessMode": false,
+    "endlessMode": true,
     "upgrades": [
         {
             "id": "click_00_punch",
