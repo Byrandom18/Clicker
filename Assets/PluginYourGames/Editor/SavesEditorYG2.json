@@ -13,12 +13,12 @@
         false,
         false
     ],
-    "idSave": 16,
+    "idSave": 14,
     "clickerInitialized": true,
     "clickerSaveVersion": 2,
-    "score": 179.14157815448616,
+    "score": 364.0,
     "phaseIndex": 1,
-    "hpLeft": 3006.000002384186,
+    "hpLeft": 2979.0,
     "pendingOverflow": 0.0,
     "muted": false,
     "musicMuted": false,
@@ -28,7 +28,7 @@
     "upgrades": [
         {
             "id": "click_00_punch",
-            "count": 9
+            "count": 1
         }
     ]
 }

@@ -6,9 +6,6 @@ namespace Clicker
     {
         static SfxController _instance;
 
-        [Header("Music")]
-        [SerializeField] AudioSource musicSource;
-
         [Header("Click")]
         [SerializeField] AudioClip[] clickClips;
         [SerializeField, Range(0f, 1f)] float clickVolume = 0.38f;
@@ -66,14 +63,6 @@ namespace Clicker
         {
             if (_instance == this)
                 _instance = null;
-        }
-
-        public void SetMusicMuted(bool muted)
-        {
-            if (musicSource == null)
-                return;
-            musicSource.ignoreListenerVolume = true;
-            musicSource.mute = muted;
         }
 
         public void PlayClick()

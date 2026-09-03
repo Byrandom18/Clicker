@@ -107,25 +107,25 @@ namespace Clicker
         {
             catalog.phaseLines = new[]
             {
-                Line("Это всё, на что ты способен?", "Is that all you've got?"),
-                Line("Щекотно. Почти.", "Ticklish. Almost."),
-                Line("Неплохо. Для разминки.", "Not bad. For a warm-up."),
-                Line("Так, теперь я серьёзно.", "Alright, now I'm serious."),
-                Line("Ты ещё здесь? Упрямо.", "Still here? Stubborn."),
-                Line("Очки не равны победе.", "Points aren't victory."),
-                Line("Мы можем делать это часами.", "We can do this for hours."),
-                Line("Поздняя игра только начинается.", "The late game is just starting."),
-                Line("Держись. Дальше будет дольше.", "Hang on. It only gets longer."),
-                Line("Двадцать минут? Я подожду.", "Twenty minutes? I'll wait."),
-                Line("Предпоследний раунд. Не зевай.", "Second to last. Stay sharp."),
-                Line("Финал. Бей, пока я стою.", "Finale. Hit me while I'm standing."),
-                Line("Последняя форма. Это ещё не конец.", "Last form. This isn't over."),
-                Line("Дальше уже некуда. Почти.", "Nowhere left to go. Almost."),
-                Line("После этого — только бесконечность.", "After this, only endless remains.")
+                Line("Отойди. Её прикрою я.", "Move. I'll cover her."),
+                Line("Не дам добить. Я выхожу.", "You don't get to finish her. I'm in."),
+                Line("Руки прочь от сестры!", "Get your hands off my sister!"),
+                Line("Дыра в защите? Закрою сама.", "A hole in the ward? I'll close it."),
+                Line("Хватит зевать. Прикрою.", "Stop yawning. I'll cover."),
+                Line("Рано радуетесь. Дальше я.", "Celebrate later. I'm next."),
+                Line("Добыча наша. Я встану.", "The loot is ours. I'll stand."),
+                Line("Сестру не отдадим. Бей меня.", "We don't give up a sister. Hit me."),
+                Line("Я вас не брошу. Давай, бей!", "I won't leave you. Come on, hit me!"),
+                Line("Слабеет? Тогда выхожу я.", "She's slipping? Then I go in."),
+                Line("Ещё рано делить победу.", "Too soon to claim a win."),
+                Line("Последние удары? Не дождётесь.", "Last hits? Not a chance."),
+                Line("Заслоню. Добычу не отдадим.", "I'll block. We're not giving the loot back."),
+                Line("Бей, пока я стою.", "Hit me while I'm standing."),
+                Line("Всё сыплется. Мы ещё вернёмся.", "It's all falling apart. We'll be back.")
             };
             catalog.victory = Line(
-                "Все противники пали. Вы прошли игру!",
-                "All opponents have fallen. You finished the game!");
+                "Порча спала. Ведьмы пусты, удача снова твоя. Можешь идти — или остаться и бить их дальше.",
+                "The hex is broken. The witches are spent, and the luck is yours again. You can leave — or stay and keep knocking them down.");
         }
 
         static UpgradeSpec Spec(string id, string ru, string en, double power, double cost)

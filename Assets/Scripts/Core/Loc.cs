@@ -43,8 +43,8 @@ namespace Clicker
         public static string ContinueEndless => T("Продолжить", "Continue");
         public static string VictoryTitle => T("Победа!", "Victory!");
         public static string VictoryBody => T(
-            "Все противники пали. Вы прошли игру!",
-            "All opponents have fallen. You finished the game!");
+            "Порча спала. Ведьмы побеждены, удача снова твоя. Можешь идти или остаться и бить их дальше.",
+            "The hex is broken. The witches are spent, and the luck is yours again. You can leave or stay and keep knocking them down.");
         public static string MegaAttack => T("МЕГА-АТАКА ЗА РЕКЛАМУ", "MEGA ATTACK FOR AN AD");
         public static string SmartAutoUpgrade => T(
             "АКТИВИРОВАТЬ УМНУЮ АВТОПРОКАЧКУ ЗА РЕКЛАМУ",

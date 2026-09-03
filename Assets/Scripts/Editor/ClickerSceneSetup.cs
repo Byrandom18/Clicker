@@ -109,6 +109,12 @@ namespace Clicker.EditorTools
             if (sfxProp != null && sfx != null)
                 sfxProp.objectReferenceValue = sfx;
 
+            var music = EnsureMusicController(game.transform);
+            WireMusicController(music);
+            var musicProp = gameSo.FindProperty("music");
+            if (musicProp != null && music != null)
+                musicProp.objectReferenceValue = music;
+
             gameSo.ApplyModifiedPropertiesWithoutUndo();
 
             if (slots != null)
@@ -139,6 +145,41 @@ namespace Clicker.EditorTools
             go.transform.SetParent(parent, false);
             Undo.RegisterCreatedObjectUndo(go, "Create Sfx");
             return Undo.AddComponent<SfxController>(go);
+        }
+
+        static MusicController EnsureMusicController(Transform parent)
+        {
+            var existing = Object.FindFirstObjectByType<MusicController>(FindObjectsInactive.Include);
+            if (existing != null)
+                return existing;
+
+            var go = new GameObject("Music");
+            go.transform.SetParent(parent, false);
+            Undo.RegisterCreatedObjectUndo(go, "Create Music");
+            return Undo.AddComponent<MusicController>(go);
+        }
+
+        static void WireMusicController(MusicController music)
+        {
+            if (music == null)
+                return;
+
+            var so = new SerializedObject(music);
+            AssignSfxClip(so, "clip", "music");
+            var sourceProp = so.FindProperty("source");
+            if (sourceProp != null && sourceProp.objectReferenceValue == null)
+            {
+                var src = music.GetComponent<AudioSource>();
+                if (src == null)
+                    src = Undo.AddComponent<AudioSource>(music.gameObject);
+                src.playOnAwake = false;
+                src.loop = true;
+                src.spatialBlend = 0f;
+                src.ignoreListenerVolume = true;
+                sourceProp.objectReferenceValue = src;
+            }
+
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         static void WireSfxController(SfxController sfx)

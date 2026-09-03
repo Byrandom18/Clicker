@@ -52,6 +52,7 @@ namespace Clicker
 
         [Header("Audio")]
         [SerializeField] SfxController sfx;
+        [SerializeField] MusicController music;
 
         [Header("Auto Upgrade")]
         [SerializeField] float autoUpgradeSeconds = 120f;
@@ -87,6 +88,7 @@ namespace Clicker
                 balance = ClickerCatalog.LoadBalance();
             if (dialogs == null)
                 dialogs = ClickerCatalog.LoadDialogs();
+            ApplyMusicMute(YG2.saves.musicMuted, false);
             _ads = new InterstitialGate(this);
         }
 
@@ -108,7 +110,10 @@ namespace Clicker
                 damagePopups = FindFirstObjectByType<DamagePopupPool>(FindObjectsInactive.Include);
             if (sfx == null)
                 sfx = FindFirstObjectByType<SfxController>(FindObjectsInactive.Include);
+            if (music == null)
+                music = FindFirstObjectByType<MusicController>(FindObjectsInactive.Include);
             EnsureSfx();
+            EnsureMusic();
         }
 
         void EnsureSfx()
@@ -118,6 +123,15 @@ namespace Clicker
             var go = new GameObject("Sfx");
             go.transform.SetParent(transform, false);
             sfx = go.AddComponent<SfxController>();
+        }
+
+        void EnsureMusic()
+        {
+            if (music != null)
+                return;
+            var go = new GameObject("Music");
+            go.transform.SetParent(transform, false);
+            music = go.AddComponent<MusicController>();
         }
 
         void OnEnable()
@@ -398,8 +412,8 @@ namespace Clicker
         void ApplyMusicMute(bool muted, bool save)
         {
             YG2.saves.musicMuted = muted;
-            if (sfx != null)
-                sfx.SetMusicMuted(muted);
+            if (music != null)
+                music.SetMuted(muted);
 
             if (save)
                 MaybeSave(true);
