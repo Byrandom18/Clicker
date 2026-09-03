@@ -102,11 +102,12 @@ namespace Clicker.EditorTools
 
             AssignPrefab(gameSo, "clickVfxPrefab", ClickerPaths.ClickHitVfx);
             AssignPrefab(gameSo, "rewardedVfxPrefab", ClickerPaths.RewardedHitVfx);
-            AssignSfx(gameSo, "clickSfx", "click");
-            AssignSfx(gameSo, "buySfx", "buy");
-            AssignSfx(gameSo, "phaseSfx", "phase");
-            AssignSfx(gameSo, "explosionSfx", "explosion");
-            AssignSfx(gameSo, "uiSfx", "ui");
+
+            var sfx = EnsureSfxController(game.transform);
+            WireSfxController(sfx);
+            var sfxProp = gameSo.FindProperty("sfx");
+            if (sfxProp != null && sfx != null)
+                sfxProp.objectReferenceValue = sfx;
 
             gameSo.ApplyModifiedPropertiesWithoutUndo();
 
@@ -128,7 +129,62 @@ namespace Clicker.EditorTools
                 prop.objectReferenceValue = prefab;
         }
 
-        static void AssignSfx(SerializedObject so, string property, string fileName)
+        static SfxController EnsureSfxController(Transform parent)
+        {
+            var existing = Object.FindFirstObjectByType<SfxController>(FindObjectsInactive.Include);
+            if (existing != null)
+                return existing;
+
+            var go = new GameObject("Sfx");
+            go.transform.SetParent(parent, false);
+            Undo.RegisterCreatedObjectUndo(go, "Create Sfx");
+            return Undo.AddComponent<SfxController>(go);
+        }
+
+        static void WireSfxController(SfxController sfx)
+        {
+            if (sfx == null)
+                return;
+
+            var so = new SerializedObject(sfx);
+            AssignClickClips(so);
+            AssignSfxClip(so, "buyClip", "buy");
+            AssignSfxClip(so, "phaseClip", "phase");
+            AssignSfxClip(so, "explosionClip", "explosion");
+            AssignSfxClip(so, "uiClip", "ui");
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        static void AssignClickClips(SerializedObject so)
+        {
+            var prop = so.FindProperty("clickClips");
+            if (prop == null || prop.arraySize > 0)
+                return;
+
+            string[] names = { "click", "click_02", "click_03", "click_04", "click_05" };
+            int count = 0;
+            for (int i = 0; i < names.Length; i++)
+            {
+                if (LoadSfxClip(names[i]) != null)
+                    count++;
+            }
+
+            if (count == 0)
+                return;
+
+            prop.arraySize = count;
+            int index = 0;
+            for (int i = 0; i < names.Length; i++)
+            {
+                var clip = LoadSfxClip(names[i]);
+                if (clip == null)
+                    continue;
+                prop.GetArrayElementAtIndex(index).objectReferenceValue = clip;
+                index++;
+            }
+        }
+
+        static void AssignSfxClip(SerializedObject so, string property, string fileName)
         {
             var prop = so.FindProperty(property);
             if (prop == null || prop.objectReferenceValue != null)

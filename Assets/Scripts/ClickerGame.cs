@@ -39,25 +39,19 @@ namespace Clicker
         float stageCoverOpacity = 0.82f;
         [SerializeField, Range(0.3f, 4f), Tooltip("Множитель размера префаба Cartoon FX.")]
         float stageVfxScale = 1f;
+        [SerializeField, Tooltip("Смещение точки спавна эффекта смены фазы относительно центра врага.")]
+        Vector2 stageVfxOffset;
 
         [Header("Hit VFX")]
         [SerializeField] GameObject clickVfxPrefab;
         [SerializeField] GameObject rewardedVfxPrefab;
         [SerializeField, Range(0.15f, 2.5f)] float clickVfxScale = 0.4f;
         [SerializeField, Range(0.3f, 3f)] float rewardedVfxScale = 1.25f;
+        [SerializeField, Tooltip("Смещение точки спавна эффекта атаки за рекламу относительно центра врага.")]
+        Vector2 rewardedVfxOffset;
 
         [Header("Audio")]
-        [SerializeField] AudioSource musicSource;
-        [SerializeField, Tooltip("Если пусто — Resources/Audio/click и click_02..05")]
-        AudioClip clickSfx;
-        [SerializeField, Tooltip("Если пусто — Resources/Audio/buy")]
-        AudioClip buySfx;
-        [SerializeField, Tooltip("Если пусто — Resources/Audio/phase")]
-        AudioClip phaseSfx;
-        [SerializeField, Tooltip("Если пусто — Resources/Audio/explosion")]
-        AudioClip explosionSfx;
-        [SerializeField, Tooltip("Если пусто — Resources/Audio/ui")]
-        AudioClip uiSfx;
+        [SerializeField] SfxController sfx;
 
         [Header("Auto Upgrade")]
         [SerializeField] float autoUpgradeSeconds = 120f;
@@ -93,7 +87,6 @@ namespace Clicker
                 balance = ClickerCatalog.LoadBalance();
             if (dialogs == null)
                 dialogs = ClickerCatalog.LoadDialogs();
-            BindSfx();
             _ads = new InterstitialGate(this);
         }
 
@@ -113,6 +106,18 @@ namespace Clicker
                 victory = FindFirstObjectByType<VictoryView>(FindObjectsInactive.Include);
             if (damagePopups == null)
                 damagePopups = FindFirstObjectByType<DamagePopupPool>(FindObjectsInactive.Include);
+            if (sfx == null)
+                sfx = FindFirstObjectByType<SfxController>(FindObjectsInactive.Include);
+            EnsureSfx();
+        }
+
+        void EnsureSfx()
+        {
+            if (sfx != null)
+                return;
+            var go = new GameObject("Sfx");
+            go.transform.SetParent(transform, false);
+            sfx = go.AddComponent<SfxController>();
         }
 
         void OnEnable()
@@ -156,7 +161,6 @@ namespace Clicker
             StopSwapRoutine();
             StopBubbleRoutine();
             StopStageVfx(true);
-            Sfx.Release(transform);
             FlushSave();
         }
 
@@ -394,11 +398,8 @@ namespace Clicker
         void ApplyMusicMute(bool muted, bool save)
         {
             YG2.saves.musicMuted = muted;
-            if (musicSource != null)
-            {
-                musicSource.ignoreListenerVolume = true;
-                musicSource.mute = muted;
-            }
+            if (sfx != null)
+                sfx.SetMusicMuted(muted);
 
             if (save)
                 MaybeSave(true);
@@ -506,7 +507,7 @@ namespace Clicker
         IEnumerator PhaseClearThenSwap(int phase)
         {
             var view = slots != null ? slots.GetEnemy(phase % 3) : null;
-            Vector3 pos = view != null ? view.WorldCenter : Vector3.zero;
+            Vector3 pos = (view != null ? view.WorldCenter : Vector3.zero) + (Vector3)stageVfxOffset;
             Vector3 size = view != null ? view.WorldSize : new Vector3(2.2f, 3.2f, 0f);
 
             float fadeIn = Mathf.Max(0.05f, stageCoverPeak);
@@ -798,11 +799,6 @@ namespace Clicker
             damagePopups = DamagePopupPool.Create(canvasRoot);
         }
 
-        void BindSfx()
-        {
-            Sfx.Bind(transform, clickSfx, buySfx, phaseSfx, explosionSfx, uiSfx);
-        }
-
         void EnsureHitVfx()
         {
             if (clickVfxPrefab == null)
@@ -825,8 +821,9 @@ namespace Clicker
         void PlayRewardedHit(double dmg)
         {
             Vector3 world = ActiveEnemyWorld();
+            Vector3 vfxPos = world + (Vector3)rewardedVfxOffset;
             if (_rewardedHits != null)
-                _rewardedHits.Play(world, rewardedVfxScale);
+                _rewardedHits.Play(vfxPos, rewardedVfxScale);
             if (damagePopups != null)
                 damagePopups.SpawnMega(dmg, WorldToScreen(world));
         }
