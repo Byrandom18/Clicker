@@ -17,8 +17,6 @@ namespace Clicker.EditorTools
                 AssetDatabase.CreateFolder("Assets", "Prefabs");
             if (!AssetDatabase.IsValidFolder("Assets/Resources"))
                 AssetDatabase.CreateFolder("Assets", "Resources");
-            if (!AssetDatabase.IsValidFolder(ClickerPaths.ResourcesPrefabDir))
-                AssetDatabase.CreateFolder("Assets/Resources", "Prefabs");
 
             if (AssetDatabase.LoadAssetAtPath<GameObject>(ClickerPaths.EnemyView) == null)
                 CreateEnemyPrefab();
@@ -35,36 +33,9 @@ namespace Clicker.EditorTools
             else
                 Debug.Log("Clicker: keep existing Assets/Prefabs/DamagePopup.prefab.");
 
-            SyncEnemyPrefabToResources();
-            SyncHitVfxToResources();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("Clicker: prefabs at Assets/Prefabs, data at Assets/Resources/Data.");
-        }
-
-        static void SyncEnemyPrefabToResources()
-        {
-            var src = AssetDatabase.LoadAssetAtPath<GameObject>(ClickerPaths.EnemyView);
-            if (src == null)
-                return;
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(ClickerPaths.EnemyViewResources) != null)
-                AssetDatabase.DeleteAsset(ClickerPaths.EnemyViewResources);
-            AssetDatabase.CopyAsset(ClickerPaths.EnemyView, ClickerPaths.EnemyViewResources);
-        }
-
-        static void SyncHitVfxToResources()
-        {
-            CopyToResources(ClickerPaths.ClickHitVfx, ClickerPaths.ResourcesPrefabDir + "/ClickHit.prefab");
-            CopyToResources(ClickerPaths.RewardedHitVfx, ClickerPaths.ResourcesPrefabDir + "/RewardedHit.prefab");
-        }
-
-        static void CopyToResources(string src, string dst)
-        {
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(src) == null)
-                return;
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(dst) != null)
-                AssetDatabase.DeleteAsset(dst);
-            AssetDatabase.CopyAsset(src, dst);
         }
 
         static void CreateEnemyPrefab()

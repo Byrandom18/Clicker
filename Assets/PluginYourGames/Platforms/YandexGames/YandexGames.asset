@@ -18,7 +18,7 @@ MonoBehaviour:
     interAdvInterval: 60
     postponeCallByFail: 0
     setLanguageMod: 1
-    useYandexMetrica: 1
+    useYandexMetrica: 0
     metricaCounterID: 0
     skipInterAdvAfterReward: 0
     saveLocal: 0
@@ -26,7 +26,7 @@ MonoBehaviour:
     autoPauseGame: 1
     selectWebGLTemplate: 1
     runInBackground: 0
-    enableExceptions: 2
+    enableExceptions: 0
     compressionFormat: 0
     decompressionFallback: 0
     autoGraphicsAPI: 1

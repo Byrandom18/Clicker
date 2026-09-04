@@ -74,6 +74,6 @@ MonoBehaviour:
     autoGraphicsAPI: 1
     managedStrippingLevel: 1
     dataCaching: 0
-    colorSpace: 0
+    colorSpace: 1
     archivingBuild: 0
     syncInitSDK: 0
