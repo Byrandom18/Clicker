@@ -54,7 +54,10 @@ namespace YG
             if (langSim != null && langSim != "")
                 lang = langSim;
 #endif
-            lang = lang.ToLower();
+            if (string.IsNullOrEmpty(lang))
+                lang = "ru";
+            else
+                lang = lang.ToLower();
 
             if (lang == "us" || lang == "as" || lang == "ai")
                 lang = "en";

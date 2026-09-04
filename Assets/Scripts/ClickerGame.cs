@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using YG;
 
 namespace Clicker
@@ -27,6 +28,7 @@ namespace Clicker
         [Header("Timing")]
         [SerializeField] float bubbleVisibleSeconds = 3f;
         [SerializeField] float phaseClearDelay = 0.55f;
+        [SerializeField] float minClickInterval = 0.1f;
 
         [Header("Stage VFX")]
         [SerializeField] GameObject stageChangeVfxPrefab;
@@ -66,6 +68,7 @@ namespace Clicker
         bool _dirty;
         bool _musicUnlocked;
         float _lastSave;
+        float _lastClickTime = float.NegativeInfinity;
         float _hudAcc;
         float _autoUpgradeAcc;
         int _screenW;
@@ -83,12 +86,32 @@ namespace Clicker
         {
             Application.targetFrameRate = 60;
             AspectLetterbox.Ensure();
+            EnsureLegacyUiInput();
             ResolveSceneRefs();
             if (balance == null)
                 balance = ClickerCatalog.LoadBalance();
             if (dialogs == null)
                 dialogs = ClickerCatalog.LoadDialogs();
             ApplyMusicMute(YG2.saves.musicMuted, false);
+        }
+
+        static void EnsureLegacyUiInput()
+        {
+            var es = EventSystem.current != null
+                ? EventSystem.current
+                : FindFirstObjectByType<EventSystem>(FindObjectsInactive.Include);
+            if (es == null)
+                return;
+
+            var modules = es.GetComponents<BaseInputModule>();
+            for (int i = 0; i < modules.Length; i++)
+            {
+                if (modules[i] != null && modules[i].GetType().Name == "InputSystemUIInputModule")
+                    Destroy(modules[i]);
+            }
+
+            if (es.GetComponent<StandaloneInputModule>() == null)
+                es.gameObject.AddComponent<StandaloneInputModule>();
         }
 
         void ResolveSceneRefs()
@@ -334,6 +357,9 @@ namespace Clicker
             UnlockMusic();
             if (!_booted || !CanTick())
                 return;
+            if (Time.unscaledTime - _lastClickTime < minClickInterval)
+                return;
+            _lastClickTime = Time.unscaledTime;
 
             if (!_combat.HasPendingInterlude && !_swapping)
                 PunchActive();

@@ -10,7 +10,8 @@ namespace YG
 
         public string GetLanguage()
         {
-            return LangRequest_js();
+            string value = LangRequest_js();
+            return string.IsNullOrEmpty(value) ? "ru" : value;
         }
     }
 }
