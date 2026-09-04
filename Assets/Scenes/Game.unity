@@ -6587,7 +6587,7 @@ MonoBehaviour:
   rect: {fileID: 839322320}
   canvasRect: {fileID: 1337546299}
   worldCamera: {fileID: 0}
-  followOffset: {x: 160, y: 250}
+  followOffset: {x: 100, y: 250}
 --- !u!114 &839322322
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9686,15 +9686,15 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 60e9f118a1c04cb4ab58c933f1f6f9f4, type: 3}
   - {fileID: 8300000, guid: 521bd25cca493524b8c8eb0522ac649f, type: 3}
   clickVolume: 0.35
-  clickPitchMin: 0.98
-  clickPitchMax: 1.02
+  clickPitchMin: 0.9
+  clickPitchMax: 1.1
   clickVoices: 6
   buyClip: {fileID: 8300000, guid: a69b0d2ffc90a5f4eb42763ed5953ab0, type: 3}
   buyVolume: 0.5
   phaseClip: {fileID: 8300000, guid: 14a71a95b96d14b44abd66369b601760, type: 3}
   phaseVolume: 1
   explosionClip: {fileID: 8300000, guid: 418c4a802d7fbb040b560890a0476d9c, type: 3}
-  explosionVolume: 0.92
+  explosionVolume: 0.9
   uiClip: {fileID: 8300000, guid: 96efdcc858d97c644856a8ada6f09efc, type: 3}
   uiVolume: 0.4
   uiDebounce: 0.04
