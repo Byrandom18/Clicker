@@ -25,7 +25,6 @@ namespace Clicker
         [SerializeField] DamagePopupPool damagePopups;
 
         [Header("Timing")]
-        [SerializeField] float idleAdSeconds = 10f;
         [SerializeField] float bubbleVisibleSeconds = 3f;
         [SerializeField] float phaseClearDelay = 0.55f;
 
@@ -61,16 +60,16 @@ namespace Clicker
 
         EconomyService _economy;
         CombatService _combat;
-        InterstitialGate _ads;
         bool _booted;
         bool _blockPlay;
         bool _swapping;
         bool _dirty;
-        bool _idleAdBusy;
+        bool _musicUnlocked;
         float _lastSave;
-        float _lastActivity;
         float _hudAcc;
         float _autoUpgradeAcc;
+        int _screenW;
+        int _screenH;
         Coroutine _swapRoutine;
         Coroutine _bubbleRoutine;
         GameObject _stageBurstGo;
@@ -78,18 +77,18 @@ namespace Clicker
         HitVfxPool _clickHits;
         HitVfxPool _rewardedHits;
         int _bubbleLinePhase = -1;
-        const float AutoSaveInterval = 30f;
+        const float AutoSaveInterval = 5f;
 
         void Awake()
         {
             Application.targetFrameRate = 60;
+            AspectLetterbox.Ensure();
             ResolveSceneRefs();
             if (balance == null)
                 balance = ClickerCatalog.LoadBalance();
             if (dialogs == null)
                 dialogs = ClickerCatalog.LoadDialogs();
             ApplyMusicMute(YG2.saves.musicMuted, false);
-            _ads = new InterstitialGate(this);
         }
 
         void ResolveSceneRefs()
@@ -142,6 +141,8 @@ namespace Clicker
                 victory.ContinueClicked += HandleVictoryContinue;
             YG2.onSwitchLang += HandleLang;
             YG2.onCloseAnyAdv += HandleAnyAdClosed;
+            YG2.onHideWindowGame += FlushSave;
+            YG2.onPauseGame += HandlePauseForMusic;
         }
 
         void OnDisable()
@@ -152,13 +153,14 @@ namespace Clicker
                 victory.ContinueClicked -= HandleVictoryContinue;
             YG2.onSwitchLang -= HandleLang;
             YG2.onCloseAnyAdv -= HandleAnyAdClosed;
+            YG2.onHideWindowGame -= FlushSave;
+            YG2.onPauseGame -= HandlePauseForMusic;
             StopSwapRoutine();
             StopBubbleRoutine();
             StopStageVfx(true);
             _swapping = false;
             if (slots != null)
                 slots.KillTween();
-            _ads?.Cancel();
         }
 
         void Start()
@@ -197,6 +199,9 @@ namespace Clicker
 
         void Update()
         {
+            TryUnlockMusic();
+            MaybeSaveOnResize();
+
             if (!_booted || _combat == null || _economy == null)
                 return;
 
@@ -220,7 +225,6 @@ namespace Clicker
             }
 
             TickAutoUpgrade();
-            MaybeIdleAd();
             MaybeSave(false);
         }
 
@@ -297,8 +301,6 @@ namespace Clicker
                     : _combat.CompletedStagesFor(_combat.ActiveEnemyIndex));
             }
 
-            MarkActivity();
-
             if (_combat.IsWon)
             {
                 ShowVictory();
@@ -329,10 +331,10 @@ namespace Clicker
 
         void HandleClick(Vector2 screenPos)
         {
+            UnlockMusic();
             if (!_booted || !CanTick())
                 return;
 
-            MarkActivity();
             if (!_combat.HasPendingInterlude && !_swapping)
                 PunchActive();
             double amount = _economy.ClickPower;
@@ -349,22 +351,22 @@ namespace Clicker
 
         void HandleBuy(UpgradeDef def)
         {
+            UnlockMusic();
             if (!_booted || _blockPlay || _combat.IsWon || def == null)
                 return;
             if (!_economy.TryBuy(def))
                 return;
             Sfx.Buy();
-            MarkActivity();
             MaybeSave(true);
             RefreshUi();
         }
 
         void HandleRewarded()
         {
+            UnlockMusic();
             if (!_booted || !CanTick() || _combat.HasPendingInterlude)
                 return;
 
-            MarkActivity();
             YG2.RewardedAdvShow("hpBoost", () =>
             {
                 if (_combat == null || _combat.IsWon || _blockPlay)
@@ -386,6 +388,7 @@ namespace Clicker
 
         void ToggleMute()
         {
+            UnlockMusic();
             bool next = !YG2.saves.muted;
             ApplyMute(next, false);
             if (!next)
@@ -396,6 +399,7 @@ namespace Clicker
 
         void ToggleMusicMute()
         {
+            UnlockMusic();
             ApplyMusicMute(!YG2.saves.musicMuted, false);
             _dirty = true;
             RefreshUi();
@@ -414,6 +418,8 @@ namespace Clicker
             YG2.saves.musicMuted = muted;
             if (music != null)
                 music.SetMuted(muted);
+            if (!muted)
+                StartMusicIfAllowed();
 
             if (save)
                 MaybeSave(true);
@@ -421,10 +427,10 @@ namespace Clicker
 
         void HandleAutoUpgrade()
         {
+            UnlockMusic();
             if (!_booted || !CanTick() || _combat.HasPendingInterlude)
                 return;
 
-            MarkActivity();
             YG2.RewardedAdvShow("autoUpgrade", () =>
             {
                 if (_combat == null || _combat.IsWon || _blockPlay)
@@ -607,7 +613,6 @@ namespace Clicker
                 hud.SnapHearts(_combat.CompletedStagesFor(_combat.ActiveEnemyIndex));
             SetPlaying(true);
             YG2.GameplayStart();
-            MarkActivity();
             RefreshUi();
             ShowPhaseBubble(completedPhase, _combat.ActiveEnemyIndex);
         }
@@ -670,6 +675,7 @@ namespace Clicker
 
         void HandleVictoryContinue()
         {
+            UnlockMusic();
             if (!_booted || _combat == null || !_combat.IsWon)
                 return;
 
@@ -695,7 +701,6 @@ namespace Clicker
                 hud.SnapHearts(_combat.CompletedStagesFor(_combat.ActiveEnemyIndex));
             SetPlaying(true);
             YG2.GameplayStart();
-            MarkActivity();
             RefreshUi();
             MaybeSave(true);
         }
@@ -753,36 +758,58 @@ namespace Clicker
             }
         }
 
-        void MarkActivity()
-        {
-            _lastActivity = Time.unscaledTime;
-        }
-
         void HandleAnyAdClosed()
         {
-            _idleAdBusy = false;
-            MarkActivity();
             RefreshBonusButtons();
+            StartMusicIfAllowed();
         }
 
-        void MaybeIdleAd()
+        void TryUnlockMusic()
         {
-            if (!_booted || _idleAdBusy || !CanTick() || _combat.HasPendingInterlude || _swapping)
+            if (_musicUnlocked)
                 return;
-            if (_bubbleRoutine != null)
+            if (!Input.GetMouseButtonDown(0) && Input.touchCount == 0)
                 return;
-            if (idleAdSeconds <= 0f || Time.unscaledTime - _lastActivity < idleAdSeconds)
-                return;
-            if (!YG2.isTimerAdvCompleted || YG2.nowAdsShow)
-                return;
+            UnlockMusic();
+        }
 
-            _idleAdBusy = true;
-            MarkActivity();
-            _ads.ShowThen(() =>
+        void UnlockMusic()
+        {
+            if (_musicUnlocked)
             {
-                _idleAdBusy = false;
-                MarkActivity();
-            });
+                StartMusicIfAllowed();
+                return;
+            }
+
+            _musicUnlocked = true;
+            StartMusicIfAllowed();
+        }
+
+        void HandlePauseForMusic(bool paused)
+        {
+            if (!paused)
+                StartMusicIfAllowed();
+        }
+
+        void StartMusicIfAllowed()
+        {
+            if (!_musicUnlocked || music == null)
+                return;
+            if (YG2.saves.musicMuted || YG2.isPauseGame || YG2.nowAdsShow)
+                return;
+            music.Play();
+        }
+
+        void MaybeSaveOnResize()
+        {
+            int w = Screen.width;
+            int h = Screen.height;
+            if (w == _screenW && h == _screenH)
+                return;
+            _screenW = w;
+            _screenH = h;
+            if (_booted)
+                FlushSave();
         }
 
         void EnsureDamagePopups()

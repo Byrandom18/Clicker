@@ -179,6 +179,10 @@ namespace Clicker.EditorTools
                 sourceProp.objectReferenceValue = src;
             }
 
+            var playOnStart = so.FindProperty("playOnStart");
+            if (playOnStart != null)
+                playOnStart.boolValue = false;
+
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 

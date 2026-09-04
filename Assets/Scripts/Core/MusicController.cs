@@ -8,7 +8,7 @@ namespace Clicker
         [SerializeField] AudioClip clip;
         [SerializeField, Range(0f, 1f)] float volume = 0.35f;
         [SerializeField] bool loop = true;
-        [SerializeField] bool playOnStart = true;
+        [SerializeField] bool playOnStart;
 
         void Awake()
         {

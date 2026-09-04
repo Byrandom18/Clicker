@@ -28,7 +28,7 @@ MonoBehaviour:
     runInBackground: 0
     enableExceptions: 0
     compressionFormat: 0
-    decompressionFallback: 0
+    decompressionFallback: 1
     autoGraphicsAPI: 1
     managedStrippingLevel: 4
     dataCaching: 1
