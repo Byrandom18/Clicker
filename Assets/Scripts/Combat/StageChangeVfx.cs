@@ -23,18 +23,9 @@ namespace Clicker
             if (prefab == null)
                 return null;
 
-            var go = Object.Instantiate(prefab, worldPos, Quaternion.identity);
+            var go = Object.Instantiate(prefab, VfxPresentation.Place(worldPos), Quaternion.identity);
             go.transform.localScale = Vector3.one * scale;
-
-            var renderers = go.GetComponentsInChildren<ParticleSystemRenderer>(true);
-            for (int i = 0; i < renderers.Length; i++)
-            {
-                var renderer = renderers[i];
-                if (renderer == null)
-                    continue;
-                renderer.sortingLayerName = SortingLayer;
-                renderer.sortingOrder = BurstOrder;
-            }
+            VfxPresentation.Prepare(go, SortingLayer, BurstOrder);
 
             var systems = go.GetComponentsInChildren<ParticleSystem>(true);
             for (int i = 0; i < systems.Length; i++)
@@ -57,7 +48,7 @@ namespace Clicker
         {
             float mul = Mathf.Max(0.05f, sizeMul);
             var go = new GameObject("StageCover");
-            go.transform.position = worldPos;
+            go.transform.position = VfxPresentation.Place(worldPos);
             go.transform.localScale = new Vector3(
                 Mathf.Max(1.6f, worldSize.x * 1.45f) * mul,
                 Mathf.Max(2.2f, worldSize.y * 1.45f) * mul,

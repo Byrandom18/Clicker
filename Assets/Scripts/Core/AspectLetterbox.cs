@@ -32,6 +32,10 @@ namespace Clicker
             _cam = GetComponent<Camera>();
             _cam.clearFlags = CameraClearFlags.SolidColor;
             _cam.backgroundColor = Fill;
+            _cam.depthTextureMode = DepthTextureMode.None;
+#if UNITY_WEBGL && !UNITY_EDITOR
+            _cam.allowHDR = false;
+#endif
             EnsureBackgroundCamera();
             FitUi();
             Apply();

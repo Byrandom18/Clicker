@@ -7,9 +7,14 @@ namespace Clicker.EditorTools
 {
     public class BalanceSimulatorWindow : EditorWindow
     {
+        const string DataRoot = "Assets/Resources/Data";
+        const string ClickDir = DataRoot + "/Upgrades/Click";
+        const string IdleDir = DataRoot + "/Upgrades/Idle";
+        const string BalancePath = DataRoot + "/Balance.asset";
+
         BalanceConfig _config;
         double _cps = 3d;
-        string _report = "Assign Balance, then simulate. Run Clicker/Create Default Data Assets first.";
+        string _report = "Assign Balance, then simulate.";
 
         [MenuItem("Clicker/Balance Simulator")]
         public static void Open()
@@ -24,15 +29,15 @@ namespace Clicker.EditorTools
 
             if (GUILayout.Button("Load default Balance.asset"))
             {
-                _config = AssetDatabase.LoadAssetAtPath<BalanceConfig>(ClickerPaths.Balance);
+                _config = AssetDatabase.LoadAssetAtPath<BalanceConfig>(BalancePath);
             }
 
             if (GUILayout.Button("Simulate 2h path"))
             {
                 if (_config == null)
-                    _config = AssetDatabase.LoadAssetAtPath<BalanceConfig>(ClickerPaths.Balance);
-                var click = LoadUpgrades(ClickerPaths.ClickDir);
-                var idle = LoadUpgrades(ClickerPaths.IdleDir);
+                    _config = AssetDatabase.LoadAssetAtPath<BalanceConfig>(BalancePath);
+                var click = LoadUpgrades(ClickDir);
+                var idle = LoadUpgrades(IdleDir);
                 var report = BalanceSimulator.Run(_config, click, idle, _cps);
                 _report = Format(report);
             }
@@ -40,8 +45,8 @@ namespace Clicker.EditorTools
             if (GUILayout.Button("Fit phase HP to target phase seconds") && _config != null)
             {
                 Undo.RecordObject(_config, "Fit clicker HP");
-                var click = LoadUpgrades(ClickerPaths.ClickDir);
-                var idle = LoadUpgrades(ClickerPaths.IdleDir);
+                var click = LoadUpgrades(ClickDir);
+                var idle = LoadUpgrades(IdleDir);
                 BalanceSimulator.FitPhaseHp(_config, click, idle, _cps);
                 EditorUtility.SetDirty(_config);
                 _report = Format(BalanceSimulator.Run(_config, click, idle, _cps));

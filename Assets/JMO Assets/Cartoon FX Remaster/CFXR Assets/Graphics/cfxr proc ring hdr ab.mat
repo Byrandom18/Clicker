@@ -10,11 +10,12 @@ Material:
   m_Name: cfxr proc ring hdr ab
   m_Shader: {fileID: -6465566751694194690, guid: 1581eccce46ba384596a1dce7936ab19,
     type: 3}
-  m_ValidKeywords:
-  - _FADING_ON
+  m_ValidKeywords: []
   m_InvalidKeywords:
   - _CFXR_DITHERED_SHADOWS_OFF
   - _CFXR_HDR_BOOST
+  - _FADING_ON
+  - _CFXR_WORLD_SPACE_RING
   m_LightmapFlags: 0
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -52,7 +53,7 @@ Material:
     - _SrcBlend: 5
     - _UseDissolve: 0
     - _UseRadialUV: 0
-    - _UseSP: 1
+    - _UseSP: 0
     - _WorldSpaceRing: 0
     m_Colors:
     - _Debug: {r: 0, g: 0, b: 0, a: 0}

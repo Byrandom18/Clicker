@@ -112,15 +112,7 @@ namespace Clicker
                     fx.cameraShake.enabled = false;
             }
 
-            var renderers = go.GetComponentsInChildren<ParticleSystemRenderer>(true);
-            for (int i = 0; i < renderers.Length; i++)
-            {
-                var renderer = renderers[i];
-                if (renderer == null)
-                    continue;
-                renderer.sortingLayerName = HitVfxPool.SortingLayer;
-                renderer.sortingOrder = HitVfxPool.SortingOrder;
-            }
+            VfxPresentation.Prepare(go, HitVfxPool.SortingLayer, HitVfxPool.SortingOrder);
 
             return item;
         }
@@ -131,7 +123,7 @@ namespace Clicker
             Quaternion rot = randomSpin
                 ? Quaternion.Euler(0f, 0f, Random.Range(0f, 360f))
                 : Quaternion.identity;
-            transform.SetPositionAndRotation(worldPos, rot);
+            transform.SetPositionAndRotation(VfxPresentation.Place(worldPos), rot);
             transform.localScale = Vector3.one * Mathf.Max(0.05f, scale);
             gameObject.SetActive(true);
 

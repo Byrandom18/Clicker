@@ -18,6 +18,13 @@ namespace Clicker
         const double Dt = 0.25d;
         const double MaxSimTime = 200000d;
         const double MinDps = 0.0001d;
+        const int DefaultPhaseCount = 15;
+
+        static readonly double[] DefaultTargetPhaseSeconds =
+        {
+            15d, 30d, 45d, 60d, 90d, 120d, 240d, 360d, 480d,
+            1200d, 1200d, 1200d, 2400d, 2400d, 2400d
+        };
 
         public static BalanceSimReport Run(BalanceConfig config, IReadOnlyList<UpgradeDef> click, IReadOnlyList<UpgradeDef> idle, double clicksPerSecond = 3d)
         {
@@ -138,7 +145,7 @@ namespace Clicker
 
         static int PhaseCount(BalanceConfig config)
         {
-            return config != null && config.phaseCount > 0 ? config.phaseCount : BalanceDefaults.PhaseCount;
+            return config != null && config.phaseCount > 0 ? config.phaseCount : DefaultPhaseCount;
         }
 
         static double TargetSecondsForPhase(BalanceConfig config, int phase)
@@ -146,8 +153,8 @@ namespace Clicker
             double t = config != null ? config.GetTargetSeconds(phase) : 0d;
             if (t > 0d)
                 return t;
-            if (phase >= 0 && phase < BalanceDefaults.TargetPhaseSeconds.Length)
-                return BalanceDefaults.TargetPhaseSeconds[phase];
+            if (phase >= 0 && phase < DefaultTargetPhaseSeconds.Length)
+                return DefaultTargetPhaseSeconds[phase];
             return 0d;
         }
 

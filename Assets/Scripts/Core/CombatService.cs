@@ -20,7 +20,7 @@ namespace Clicker
         public double HpMax => GetPhaseHp(IsWon ? PhaseCount - 1 : PhaseIndex);
         public int ActiveEnemyIndex => PhaseIndex % 3;
         public int ActiveStageIndex => Mathf.Clamp(PhaseIndex / 3, 0, CampaignStagesPerEnemy - 1);
-        public int PhaseCount => _balance != null && _balance.phaseCount > 0 ? _balance.phaseCount : BalanceDefaults.PhaseCount;
+        public int PhaseCount => _balance != null && _balance.phaseCount > 0 ? _balance.phaseCount : 15;
 
         public int CompletedStagesFor(int enemyIndex)
         {
@@ -84,7 +84,7 @@ namespace Clicker
                 return _balance.GetPhaseHp(phase);
 
             double last = _balance.GetPhaseHp(count - 1);
-            double mult = _balance.endlessHpMult > 1d ? _balance.endlessHpMult : BalanceDefaults.EndlessHpMult;
+            double mult = _balance.endlessHpMult > 1d ? _balance.endlessHpMult : 1.15d;
             int extra = phase - (count - 1);
             return last * Math.Pow(mult, extra);
         }
