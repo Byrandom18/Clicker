@@ -17,9 +17,9 @@ MonoBehaviour:
   nameEn: Azure
   placeholderColor: {r: 0.25, g: 0.45, b: 0.9, a: 1}
   stageSprites:
-  - {fileID: 21300000, guid: 4c001dffa08fac749af886f3adda3454, type: 3}
-  - {fileID: 21300000, guid: 9b32c1a5175fc494bbf9a6651f64bc1b, type: 3}
-  - {fileID: 21300000, guid: 0a030852a2e486940886cfff709210ba, type: 3}
-  - {fileID: 21300000, guid: dfc8f0ed2b608c6409766bfcf4a3b290, type: 3}
-  - {fileID: 21300000, guid: d30d8c300a76b6447b7b9692e078f0c8, type: 3}
-  - {fileID: 21300000, guid: 5eb58cc05b3fb824f8a6d0a8287781cd, type: 3}
+  - {fileID: 21300000, guid: 7c8d7db5c23dc0c4e90f0c639606dcd7, type: 3}
+  - {fileID: 21300000, guid: d3fcfb1749a5e9f40b0068206a9a20b6, type: 3}
+  - {fileID: 21300000, guid: 28363327f8649f142b15f57f4e6d31aa, type: 3}
+  - {fileID: 21300000, guid: 0d976a7aefe579944ba9cc73ce70c2e2, type: 3}
+  - {fileID: 21300000, guid: c40df40867f39214e84e26b6f08dcc09, type: 3}
+  - {fileID: 21300000, guid: 2a971a755c9903c48a189585150adcc7, type: 3}

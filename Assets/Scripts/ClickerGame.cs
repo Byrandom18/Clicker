@@ -445,7 +445,7 @@ namespace Clicker
             if (music != null)
                 music.SetMuted(muted);
             if (!muted)
-                StartMusicIfAllowed();
+                StartMusicIfAllowed(true);
 
             if (save)
                 MaybeSave(true);
@@ -787,7 +787,7 @@ namespace Clicker
         void HandleAnyAdClosed()
         {
             RefreshBonusButtons();
-            StartMusicIfAllowed();
+            StartMusicIfAllowed(true);
         }
 
         void TryUnlockMusic()
@@ -808,22 +808,22 @@ namespace Clicker
             }
 
             _musicUnlocked = true;
-            StartMusicIfAllowed();
+            StartMusicIfAllowed(true);
         }
 
         void HandlePauseForMusic(bool paused)
         {
             if (!paused)
-                StartMusicIfAllowed();
+                StartMusicIfAllowed(true);
         }
 
-        void StartMusicIfAllowed()
+        void StartMusicIfAllowed(bool fadeIn = false)
         {
             if (!_musicUnlocked || music == null)
                 return;
             if (YG2.saves.musicMuted || YG2.isPauseGame || YG2.nowAdsShow)
                 return;
-            music.Play();
+            music.Play(fadeIn);
         }
 
         void MaybeSaveOnResize()

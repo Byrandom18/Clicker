@@ -17,9 +17,9 @@ MonoBehaviour:
   nameEn: Pink
   placeholderColor: {r: 0.85, g: 0.25, b: 0.28, a: 1}
   stageSprites:
-  - {fileID: 21300000, guid: 821522d7cb73bf24886c513b8bb9ca37, type: 3}
-  - {fileID: 21300000, guid: 80cec106bf80f844ba2b131f0ec4fbad, type: 3}
-  - {fileID: 21300000, guid: 0c3a63b234647164b935ced1dc6037b8, type: 3}
-  - {fileID: 21300000, guid: eadecd783006f324a83ea26cfcf6daa0, type: 3}
-  - {fileID: 21300000, guid: bf5215578c4e759419bb9c04515dc925, type: 3}
-  - {fileID: 21300000, guid: fc436119033f2604b9b1e562e26c5e7f, type: 3}
+  - {fileID: 21300000, guid: bdab246e5292110459418300b2e7125b, type: 3}
+  - {fileID: 21300000, guid: 8611749dd5e4682459041a7eb3d27e7f, type: 3}
+  - {fileID: 21300000, guid: 42f74aef6933731458c1ac997dcee23c, type: 3}
+  - {fileID: 21300000, guid: e26a09cdeaf76ef49ba4874900a274d1, type: 3}
+  - {fileID: 21300000, guid: df808c277c0f31d4f9b03e222f703ed5, type: 3}
+  - {fileID: 21300000, guid: fc10f005351a15547874ba617d81f60e, type: 3}
